@@ -32,7 +32,7 @@ process.load("RecoMuon.TrackingTools.MuonServiceProxy_cff")
 
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")  #DB v2, at least since GR_E_V42
 
-process.GlobalTag.globaltag = '90X_dataRun2_Express_v1'
+process.GlobalTag.globaltag = '80X_dataRun2_2016LegacyRepro_v3'#90X_dataRun2_Express_v1'
 
 # for the emulator
 process.load("L1TriggerConfig.DTTPGConfigProducers.L1DTTPGConfigFromDB_cff")
@@ -52,11 +52,14 @@ process.source = cms.Source("PoolSource",
 
   fileNames = cms.untracked.vstring
   (
-    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/000BE88F-ED97-E611-B962-02163E011D7E.root',
-    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/0092B080-0798-E611-AD7E-02163E01184D.root',
-    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/00958F3E-FE97-E611-A000-02163E014255.root',
-    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/00B04838-E597-E611-882E-02163E0120A4.root',
-    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/00C5C0B0-EE97-E611-A10B-FA163EE76B26.root',
+'/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-PromptReco-v2/000/283/830/00000/001637C2-489C-E611-A108-02163E0141B5.root',
+'/store/data/Run2016H/SingleMuon/RAW-RECO/ZMu-PromptReco-v2/000/283/830/00000/04439A9C-489C-E611-B3F7-02163E01254D.root',
+
+#    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/000BE88F-ED97-E611-B962-02163E011D7E.root',
+#    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/0092B080-0798-E611-AD7E-02163E01184D.root',
+#    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/00958F3E-FE97-E611-A000-02163E014255.root',
+#    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/00B04838-E597-E611-882E-02163E0120A4.root',
+#    '/store/express/Run2016H/ExpressPhysics/FEVT/Express-v2/000/283/820/00000/00C5C0B0-EE97-E611-A10B-FA163EE76B26.root',
 
   ),
   secondaryFileNames = cms.untracked.vstring(
@@ -94,6 +97,7 @@ process.DTMuonSelection = cms.EDFilter("DTMuonSelection",
 process.load("UserCode/DTDPGAnalysis/DTTTreGenerator_cfi")
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(False))
 
+process.myDTNtuple.dtExtrapolation = cms.bool(True) #Set False if DT extrapolation on RPC layer is not needed
 process.myDTNtuple.localDTmuons = cms.untracked.bool(False)
 process.myDTNtuple.outputFile = "DTNtuple.root"
 process.myDTNtuple.dtTrigSimDCCLabel = cms.InputTag("dtTriggerPrimitiveDigis")

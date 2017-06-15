@@ -74,6 +74,10 @@
 #include <DataFormats/RPCDigi/interface/RPCDigiCollection.h>
 #include <DataFormats/RPCRecHit/interface/RPCRecHitCollection.h>
 #include <DataFormats/MuonDetId/interface/RPCDetId.h>
+#include <Geometry/RPCGeometry/interface/RPCGeomServ.h>
+#include <Geometry/RPCGeometry/interface/RPCGeometry.h>
+#include "Geometry/RPCGeometry/interface/RPCRoll.h" 
+#include "UserCode/DTDPGAnalysis/interface/DTSegmentToRPC.h"
 
 #include "CalibMuon/DTDigiSync/interface/DTTTrigBaseSync.h"
 #include "CalibMuon/DTDigiSync/interface/DTTTrigSyncFactory.h"
@@ -83,6 +87,11 @@
 #include "DataFormats/RPCDigi/interface/RPCDigi.h"
 #include <DataFormats/MuonData/interface/MuonDigiCollection.h>
 
+#include "FWCore/Framework/interface/ESHandle.h"
+#include <Geometry/CommonTopologies/interface/RectangularStripTopology.h>
+
+#include "RecoLocalMuon/RPCRecHit/interface/RPCPointProducer.h"
+
 #include <iostream>
 #include <vector>
 #include "TMath.h"
@@ -90,6 +99,46 @@
 
 using namespace std;
 using namespace reco;
+
+ObjectMap* ObjectMap::mapInstance = NULL;
+ 
+ ObjectMap* ObjectMap::GetInstance(const edm::EventSetup& iSetup){
+   if (mapInstance == NULL){
+     mapInstance = new ObjectMap(iSetup);
+   }
+   return mapInstance;
+ }
+ 
+ ObjectMap::ObjectMap(const edm::EventSetup& iSetup)
+ {
+   edm::ESHandle<RPCGeometry> rpcGeo;
+   edm::ESHandle<DTGeometry> dtGeo;
+
+  iSetup.get<MuonGeometryRecord>().get(rpcGeo);
+   iSetup.get<MuonGeometryRecord>().get(dtGeo);
+   
+   for (TrackingGeometry::DetContainer::const_iterator it=rpcGeo->dets().begin();it<rpcGeo->dets().end();it++){
+     if(dynamic_cast< const RPCChamber* >( *it ) != 0 ){
+       auto ch = dynamic_cast< const RPCChamber* >( *it ); 
+       std::vector< const RPCRoll*> roles = (ch->rolls());
+       for(std::vector<const RPCRoll*>::const_iterator r = roles.begin();r != roles.end(); ++r){
+       		RPCDetId rpcId = (*r)->id();
+       		int region=rpcId.region();
+       		if(region==0){
+       				int wheel=rpcId.ring();
+       				int sector=rpcId.sector();
+       				int station=rpcId.station();
+       				DTStationIndex ind(region,wheel,sector,station);
+       				std::set<RPCDetId> myrolls;
+       				if (rollstoreDT.find(ind)!=rollstoreDT.end()) myrolls=rollstoreDT[ind];
+       				myrolls.insert(rpcId);
+       				rollstoreDT[ind]=myrolls;
+     		}
+       }
+ 	}
+   }
+}
+ 
 
 TTreeGenerator::TTreeGenerator(const edm::ParameterSet& pset):
       rpcToken_(consumes<MuonDigiCollection<RPCDetId,RPCDigi> > (pset.getParameter<edm::InputTag>("rpcLabel"))),
@@ -168,8 +217,9 @@ TTreeGenerator::TTreeGenerator(const edm::ParameterSet& pset):
   bmtfPhInputTag_ = consumes<L1MuDTChambPhContainer>(pset.getParameter<edm::InputTag>("bmtfInputPhDigis"));
   bmtfThInputTag_ = consumes<L1MuDTChambThContainer>(pset.getParameter<edm::InputTag>("bmtfInputThDigis"));
   bmtfOutputTag_ = consumes<l1t::RegionalMuonCandBxCollection>(pset.getParameter<edm::InputTag>("bmtfOutputDigis"));
-
-   OnlyBarrel_ = pset.getParameter<bool>("OnlyBarrel");
+  
+  OnlyBarrel_ = pset.getParameter<bool>("OnlyBarrel");
+  dtExtrapolation_ = pset.getParameter<bool>("dtExtrapolation");
 
 // unpacking Rpc RecHit
 // UnpackingRpcRecHitLabel_  = pset.getParameter<edm::InputTag>("UnpackingRpcRecHitLabel");
@@ -221,6 +271,10 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
    edm::ESHandle<DTGeometry> dtGeomH;
    context.get<MuonGeometryRecord>().get(dtGeomH);
    const DTGeometry* dtGeom_ = dtGeomH.product();
+   
+   edm::ESHandle<RPCGeometry> rpcGeomH;  
+   context.get<MuonGeometryRecord>().get(rpcGeomH);
+   const RPCGeometry* rpcGeom_ = rpcGeomH.product();
 
 
   //retrieve the beamspot info
@@ -363,7 +417,8 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
 
 
   //DT SEGMENTS
-  fill_dtsegments_variables(dtsegments4D, dtGeom_);
+//   fill_dtsegments_variables(dtsegments4D, dtGeom_);
+  fill_dtsegments_variables(dtsegments4D, dtGeom_, rpcGeom_, context);
 
   //CSC SEGMENTS
   if(!localDTmuons_) fill_cscsegments_variables(cscsegments);
@@ -388,14 +443,14 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   // RPC
   if(!localDTmuons_) fill_rpc_variables(event,rpcHits);
   
-   analyzeBMTF(event);
-
-   analyzeRPCunpacking(event);
-
-   analyzeUnpackingRpcRecHit(event);
+  analyzeBMTF(event);
+  
+  analyzeRPCunpacking(event);
+  
+  analyzeUnpackingRpcRecHit(event, rpcGeom_);  
   
   tree_->Fill();
-
+  
   return;
 }
 
@@ -441,7 +496,8 @@ void TTreeGenerator::fill_digi_variablesSim(edm::Handle<DTDigiSimLinkCollection>
 }
 
 
-void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, const DTGeometry* dtGeom_)
+// void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, const DTGeometry* dtGeom_)
+void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, const DTGeometry* dtGeom_, const RPCGeometry* rpcGeom_, const edm::EventSetup& iSetup)
 {
 
   idtsegments = 0;
@@ -559,10 +615,143 @@ void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollect
 	new ((*segm4D_zHits_TimeCali)[idtsegments]) TVectorF(dummyfloat);
       }
       idtsegments++;
-    }
-  }
+      
+	if(dtExtrapolation_){
+	
+		DT_segment_onRPC = 0;
+		if(segments4D->size()>10){ //Too many segments in this event we are not doing the extrapolation
+			std::cout<<"-----------------------------Too many segments in this event we are not doing the extrapolation"<<std::endl;
+		}
+		else{   
+			std::map<DTChamberId,int> DTSegmentCounter;
+			DTChamberId DTId = segment4D->chamberId();
+			
+// 			if(DTSegmentCounter[DTId]!=1 || DTId.station()==4){
+// 				std::cout<<"DT \t \t More than one segment in this chamber, or we are in Station 4"<<std::endl;
+// 				continue;
+// 			}
+			
+			int dtWheel = DTId.wheel(); //maybe unuseful
+			int dtStation = DTId.station();
+			int dtSector = DTId.sector();      
+			
+			LocalPoint segmentPosition= segment4D->localPosition();
+			LocalVector segmentDirection=segment4D->localDirection();
+			
+			const GeomDet* gdet=dtGeom_->idToDet(segment4D->geographicalId());
+			const BoundPlane & DTSurface = gdet->surface();	 
+			
+			if(segment4D->dimension()!=4) continue;  //check if the dimension of the segment is 4
+			if((segment4D->phiSegment()->recHits()).size()<7) continue; //check if there are 2 phi superlayers fired (at least 7hits)
+			if((segment4D->zSegment()->recHits()).size()<4) continue; //check if there are at least 4 hits for the Z projection
+
+			float Xo=segmentPosition.x();
+			float Yo=segmentPosition.y();
+			float Zo=segmentPosition.z();
+			float dx=segmentDirection.x();
+			float dy=segmentDirection.y();
+			float dz=segmentDirection.z();
+
+			ObjectMap* TheObject = ObjectMap::GetInstance(iSetup);
+			DTStationIndex theindex(0,dtWheel,dtSector,dtStation);
+			std::set<RPCDetId> rollsForThisDT = TheObject->GetInstance(iSetup)->GetRolls(theindex);
+			assert(rollsForThisDT.size()>=1);		
+
+			for (std::set<RPCDetId>::iterator iteraRoll = rollsForThisDT.begin();iteraRoll != rollsForThisDT.end(); iteraRoll++){
+				const RPCRoll* rollasociated = rpcGeom_->roll(*iteraRoll);
+				RPCDetId rpcId = rollasociated->id();
+				const BoundPlane & RPCSurface = rollasociated->surface(); 
+
+				RPCGeomServ rpcsrv(rpcId);
+				std::string nameRoll = rpcsrv.name();
+
+				GlobalPoint CenterPointRollGlobal = RPCSurface.toGlobal(LocalPoint(0,0,0));
+ 
+				LocalPoint CenterRollinDTFrame = DTSurface.toLocal(CenterPointRollGlobal);
+ 
+				float D=CenterRollinDTFrame.z();
+ 
+				float X=Xo+dx*D/dz;
+				float Y=Yo+dy*D/dz;
+				float Z=D;
+ 
+				const RectangularStripTopology* top_= dynamic_cast<const RectangularStripTopology*> (&(rollasociated->topology()));
+				LocalPoint xmin = top_->localPosition(0.);
+				LocalPoint xmax = top_->localPosition((float)rollasociated->nstrips());
+				float rsize = fabs( xmax.x()-xmin.x() );
+				float stripl = top_->stripLength();
+ 
+				float stripw = top_->pitch();
+ 
+				float extrapolatedDistance = sqrt((X-Xo)*(X-Xo)+(Y-Yo)*(Y-Yo)+(Z-Zo)*(Z-Zo));
+			
+				if(extrapolatedDistance<=MaxD){ 
+				  GlobalPoint GlobalPointExtrapolated = DTSurface.toGlobal(LocalPoint(X,Y,Z));
+				  LocalPoint PointExtrapolatedRPCFrame = RPCSurface.toLocal(GlobalPointExtrapolated);
+				
+				  if(fabs(PointExtrapolatedRPCFrame.z()) < 1. && 
+				     fabs(PointExtrapolatedRPCFrame.x()) < rsize*eyr && 
+				     fabs(PointExtrapolatedRPCFrame.y()) < stripl*eyr){
+
+				    LocalVector segmentDirection=segment4D->localDirection();
+				    float dx=segmentDirection.x();
+				    float dz=segmentDirection.z();
+				    float cosal = dx/sqrt(dx*dx+dz*dz);
+				    float angle = acos(cosal)*180/3.1415926;
+				    			    
+				    RPCRecHit RPCPoint(rpcId,0,LocalPoint(PointExtrapolatedRPCFrame.x(),PointExtrapolatedRPCFrame.y(),angle));
+
+				    float dt_loc_x = PointExtrapolatedRPCFrame.x();
+				    float dt_loc_y = PointExtrapolatedRPCFrame.y();
+				    float dt_loc_z = PointExtrapolatedRPCFrame.z();
+				    float dt_loc_phi = PointExtrapolatedRPCFrame.phi();
+				    float dt_loc_eta = PointExtrapolatedRPCFrame.eta();
+				    float dt_glob_x = GlobalPointExtrapolated.x();
+				    float dt_glob_y = GlobalPointExtrapolated.y();
+				    float dt_glob_z = GlobalPointExtrapolated.z();
+				    float dt_glob_eta = GlobalPointExtrapolated.eta();
+				    float dt_glob_phi = GlobalPointExtrapolated.phi();
+				    
+				    DT_extrapolated_OnRPC_BX.push_back(RPCPoint.BunchX());
+				    
+				    DT_extrapolated_OnRPC_Loc_x.push_back(dt_loc_x);
+				    DT_extrapolated_OnRPC_Loc_y.push_back(dt_loc_y);
+				    DT_extrapolated_OnRPC_Loc_z.push_back(dt_loc_z);
+				    DT_extrapolated_OnRPC_Loc_eta.push_back(dt_loc_eta);
+				    DT_extrapolated_OnRPC_Loc_phi.push_back(dt_loc_phi);
+				    
+				    DT_extrapolated_OnRPC_Glob_x.push_back(dt_glob_x);
+				    DT_extrapolated_OnRPC_Glob_y.push_back(dt_glob_y);
+				    DT_extrapolated_OnRPC_Glob_z.push_back(dt_glob_z);
+				    DT_extrapolated_OnRPC_Glob_eta.push_back(dt_glob_eta);
+				    DT_extrapolated_OnRPC_Glob_phi.push_back(dt_glob_phi);
+				    
+				    DT_extrapolated_OnRPC_Region.push_back(rpcId.region());
+				    DT_extrapolated_OnRPC_Sector.push_back(rpcId.sector());
+				    DT_extrapolated_OnRPC_Station.push_back(rpcId.station());
+				    DT_extrapolated_OnRPC_Layer.push_back(rpcId.layer());
+				    DT_extrapolated_OnRPC_Roll.push_back(rpcId.roll());
+				    DT_extrapolated_OnRPC_Ring.push_back(rpcId.ring());
+				    DT_extrapolated_OnRPC_Stripw.push_back(stripw);
+				    		
+				    DT_segment_onRPC++;
+			  
+				  }else {
+/*			    if(debug)*/ //std::cout<<"DT \t \t \t \t No the prediction is outside of this roll"<<std::endl;
+				  }//Condition for the right match
+				}else{
+/*			  if(debug) */ //std::cout<<"DT \t \t \t No, Exrtrapolation too long!, canceled"<<std::endl;
+				}//Distance is too big
+
+			}//loop over all the rolls asociated  
+	} //else: segments4D->size()<10
+  } // if: do you want extrapolation ?
+  
+  } // for on segment4D
+ } // for on chambIt
+ 
   return;
-}
+} // close the function
 
 void TTreeGenerator::fill_dtphi_info(const DTChamberRecSegment2D* phiSeg, const GeomDet* chamb)
 {
@@ -957,7 +1146,7 @@ void TTreeGenerator::fill_rpc_variables(const edm::Event &e, edm::Handle<RPCRecH
   return;
 }
 
-void TTreeGenerator::analyzeUnpackingRpcRecHit(const edm::Event& event)
+void TTreeGenerator::analyzeUnpackingRpcRecHit(const edm::Event& event, const RPCGeometry* rpcGeom_)
 {
   edm::Handle<RPCRecHitCollection> UnpackingRpcHits;
   event.getByToken(UnpackingRpcRecHitToken_, UnpackingRpcHits);
@@ -976,6 +1165,22 @@ void TTreeGenerator::analyzeUnpackingRpcRecHit(const edm::Event& event)
     int roll = rpcId.roll();
     int ring = rpcId.ring();
 
+    LocalPoint recHitPos=recHit->localPosition();
+    float loc_x = recHitPos.x();
+    float loc_y = recHitPos.y();
+    float loc_z = recHitPos.z();
+	float loc_phi = recHitPos.phi();
+	float loc_eta = recHitPos.eta();
+
+    const RPCRoll * rollasociated = rpcGeom_->roll(rpcId);
+    const BoundPlane & RPCSurface = rollasociated->surface(); 
+    GlobalPoint RPCRecHitInGlobal = RPCSurface.toGlobal(recHitPos);
+    float glob_x = RPCRecHitInGlobal.x();
+    float glob_y = RPCRecHitInGlobal.y();
+    float glob_z = RPCRecHitInGlobal.z();
+    float glob_eta = RPCRecHitInGlobal.eta();
+    float glob_phi = RPCRecHitInGlobal.phi();
+    
 	if(OnlyBarrel_ && region != 0) continue;
 	    
     RpcRechit_TwinMux_region.push_back(region);
@@ -988,6 +1193,18 @@ void TTreeGenerator::analyzeUnpackingRpcRecHit(const edm::Event& event)
     RpcRechit_TwinMux_subsector.push_back(subsector);
     RpcRechit_TwinMux_roll.push_back(roll);
     RpcRechit_TwinMux_ring.push_back(ring);
+    RpcRechit_TwinMux_Loc_x.push_back(loc_x);
+    RpcRechit_TwinMux_Loc_y.push_back(loc_y);
+    RpcRechit_TwinMux_Loc_z.push_back(loc_z);
+	RpcRechit_TwinMux_Loc_eta.push_back(loc_eta);
+	RpcRechit_TwinMux_Loc_phi.push_back(loc_phi);    
+
+
+    RpcRechit_TwinMux_Glob_x.push_back(glob_x);
+    RpcRechit_TwinMux_Glob_y.push_back(glob_y);
+    RpcRechit_TwinMux_Glob_z.push_back(glob_z);
+	RpcRechit_TwinMux_Glob_eta.push_back(glob_eta);
+	RpcRechit_TwinMux_Glob_phi.push_back(glob_phi);
     irpcrechits_TwinMux++;
   }
   return;
@@ -1399,6 +1616,36 @@ void TTreeGenerator::beginJob()
    tree_->Branch("RpcRecHitTwinMuxSubsector", &RpcRechit_TwinMux_subsector);
    tree_->Branch("RpcRecHitTwinMuxRoll", &RpcRechit_TwinMux_roll);
    tree_->Branch("RpcRecHitTwinMuxRing", &RpcRechit_TwinMux_ring);
+   tree_->Branch("RpcRechitTwinMuxLocX", &RpcRechit_TwinMux_Loc_x);
+   tree_->Branch("RpcRechitTwinMuxLocY", &RpcRechit_TwinMux_Loc_y);
+   tree_->Branch("RpcRechitTwinMuxLocZ", &RpcRechit_TwinMux_Loc_z);
+   tree_->Branch("RpcRechitTwinMuxLocEta", &RpcRechit_TwinMux_Loc_eta);
+   tree_->Branch("RpcRechitTwinMuxLocPhi", &RpcRechit_TwinMux_Loc_phi);
+   tree_->Branch("RpcRechitTwinMuxGlobX", &RpcRechit_TwinMux_Glob_x);
+   tree_->Branch("RpcRechitTwinMuxGlobY", &RpcRechit_TwinMux_Glob_y);
+   tree_->Branch("RpcRechitTwinMuxGlobZ", &RpcRechit_TwinMux_Glob_z);
+   tree_->Branch("RpcRechitTwinMuxGlobEta", &RpcRechit_TwinMux_Glob_eta);
+   tree_->Branch("RpcRechitTwinMuxGlobPhi", &RpcRechit_TwinMux_Glob_phi);
+      
+   tree_->Branch("DTextrapolatedOnRPCBX", &DT_extrapolated_OnRPC_BX);
+   tree_->Branch("DTextrapolatedOnRPCLocX", &DT_extrapolated_OnRPC_Loc_x);
+   tree_->Branch("DTextrapolatedOnRPCLocY", &DT_extrapolated_OnRPC_Loc_y);
+   tree_->Branch("DTextrapolatedOnRPCLocZ", &DT_extrapolated_OnRPC_Loc_z);
+   tree_->Branch("DTextrapolatedOnRPCLocEta", &DT_extrapolated_OnRPC_Loc_eta);
+   tree_->Branch("DTextrapolatedOnRPCLocPhi", &DT_extrapolated_OnRPC_Loc_phi);
+   tree_->Branch("DTextrapolatedOnRPCGlobX", &DT_extrapolated_OnRPC_Glob_x);
+   tree_->Branch("DTextrapolatedOnRPCGlobY", &DT_extrapolated_OnRPC_Glob_y);
+   tree_->Branch("DTextrapolatedOnRPCGlobZ", &DT_extrapolated_OnRPC_Glob_z);
+   tree_->Branch("DTextrapolatedOnRPCGlobEta", &DT_extrapolated_OnRPC_Glob_eta);
+   tree_->Branch("DTextrapolatedOnRPCGlobPhi", &DT_extrapolated_OnRPC_Glob_phi);
+   tree_->Branch("DTextrapolatedOnRPCRegion", &DT_extrapolated_OnRPC_Region);
+   tree_->Branch("DTextrapolatedOnRPCSector", &DT_extrapolated_OnRPC_Sector);
+   tree_->Branch("DTextrapolatedOnRPCStation", &DT_extrapolated_OnRPC_Station);
+   tree_->Branch("DTextrapolatedOnRPCLayer", &DT_extrapolated_OnRPC_Layer);
+   tree_->Branch("DTextrapolatedOnRPCRoll", &DT_extrapolated_OnRPC_Roll);
+   tree_->Branch("DTextrapolatedOnRPCRing", &DT_extrapolated_OnRPC_Ring);
+   tree_->Branch("DTextrapolatedOnRPCStripw", &DT_extrapolated_OnRPC_Stripw);
+   tree_->Branch("NDTsegmentonRPC", &DT_segment_onRPC);
 
   return;
 }
@@ -1631,6 +1878,35 @@ inline void TTreeGenerator::clear_Arrays()
    RpcRechit_TwinMux_subsector.clear();
    RpcRechit_TwinMux_roll.clear();
    RpcRechit_TwinMux_ring.clear();
+   RpcRechit_TwinMux_Loc_x.clear();
+   RpcRechit_TwinMux_Loc_y.clear();
+   RpcRechit_TwinMux_Loc_z.clear(); 
+   RpcRechit_TwinMux_Loc_eta.clear(); 
+   RpcRechit_TwinMux_Loc_phi.clear(); 
+   RpcRechit_TwinMux_Glob_x.clear();
+   RpcRechit_TwinMux_Glob_y.clear();
+   RpcRechit_TwinMux_Glob_z.clear(); 
+   RpcRechit_TwinMux_Glob_eta.clear(); 
+   RpcRechit_TwinMux_Glob_phi.clear(); 
+
+   DT_extrapolated_OnRPC_BX.clear();
+   DT_extrapolated_OnRPC_Loc_x.clear();
+   DT_extrapolated_OnRPC_Loc_y.clear();
+   DT_extrapolated_OnRPC_Loc_z.clear();
+   DT_extrapolated_OnRPC_Loc_eta.clear();
+   DT_extrapolated_OnRPC_Loc_phi.clear();
+   DT_extrapolated_OnRPC_Glob_x.clear();
+   DT_extrapolated_OnRPC_Glob_y.clear();
+   DT_extrapolated_OnRPC_Glob_z.clear();
+   DT_extrapolated_OnRPC_Glob_eta.clear();
+   DT_extrapolated_OnRPC_Glob_phi.clear();
+   DT_extrapolated_OnRPC_Region.clear();
+   DT_extrapolated_OnRPC_Sector.clear();
+   DT_extrapolated_OnRPC_Station.clear();
+   DT_extrapolated_OnRPC_Layer.clear();
+   DT_extrapolated_OnRPC_Roll.clear();
+   DT_extrapolated_OnRPC_Ring.clear();
+   DT_extrapolated_OnRPC_Stripw.clear();
   
   return;
 }
