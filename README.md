@@ -12,9 +12,13 @@ cmsenv
 
 git clone https://github.com/ferrico/DTDPGAnalysis.git UserCode/DTDPGAnalysis
 
-scramv1 b -j 5
-
 cd UserCode/DTDPGAnalysis/test
+
+git checkout DT_Extrapolation_on_RPC
+
+cd ../../
+
+scramv1 b -j 5
 
 cmsRun RunTree_collisions_cfg.py 
 
