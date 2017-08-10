@@ -174,11 +174,25 @@ std::vector<float> STAMu_z_mb2;
 std::vector<float> STAMu_phi_mb2;
 std::vector<float> STAMu_pseta_mb2;
 
-std::vector<float> TRKMu_x_MB;
-std::vector<float> TRKMu_y_MB;
-std::vector<short> TRKMu_sector_MB;
-std::vector<short> TRKMu_station_MB;
-std::vector<short> TRKMu_wheel_MB;
+std::vector<float> TRKMu_x_MB1;
+std::vector<float> TRKMu_y_MB1;
+std::vector<short> TRKMu_sector_MB1;
+std::vector<short> TRKMu_wheel_MB1;
+
+std::vector<float> TRKMu_x_MB2;
+std::vector<float> TRKMu_y_MB2;
+std::vector<short> TRKMu_sector_MB2;
+std::vector<short> TRKMu_wheel_MB2;
+
+std::vector<float> TRKMu_x_MB3;
+std::vector<float> TRKMu_y_MB3;
+std::vector<short> TRKMu_sector_MB3;
+std::vector<short> TRKMu_wheel_MB3;
+
+std::vector<float> TRKMu_x_MB4;
+std::vector<float> TRKMu_y_MB4;
+std::vector<short> TRKMu_sector_MB4;
+std::vector<short> TRKMu_wheel_MB4;
 
 //GMT
 std::vector<short> gmt_bx;

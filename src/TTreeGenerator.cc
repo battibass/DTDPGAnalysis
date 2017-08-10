@@ -1016,16 +1016,22 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
     }
 
     Int_t iMatches = 0;
-    if ( nmuon->isMatchesValid() )
+
+    int wheel[4]   = {-999, -999, -999, -999};
+    int sector[4]  = {-999, -999, -999, -999};
+    float x[4] = {-999., -999., -999., -999.};
+    float y[4] = {-999., -999., -999., -999.};
+
+    std::vector<int> wheels;
+    std::vector<int> stations;
+    std::vector<int> sectors;
+
+    if ( nmuon->isTrackerMuon() &&
+	 nmuon->isMatchesValid() )
       {
 	for ( const reco::MuonChamberMatch & match : nmuon->matches() )
 	  {
 	    
-	    int wheel[4]   = {-999, -999, -999, -999};
-	    int sector[4]  = {-999, -999, -999, -999};
-	    float x[4] = {-999., -999., -999., -999.};
-	    float y[4] = {-999., -999., -999., -999.};
-
 	    if (match.edgeX < -5. &&
 		match.edgeY < -5. &&
 		match.id.det() == DetId::Muon && 
@@ -1037,7 +1043,11 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
 		int ch  = dtId.station();
 		int sec = dtId.sector();
 		int wh  = dtId.wheel();
-		
+
+		wheels.push_back(wh);
+		stations.push_back(ch);
+		sectors.push_back(sec);
+
 		x[ch -1] = match.x;
 		y[ch -1] = match.y;
 		sector[ch -1] = sec;
@@ -1046,15 +1056,36 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
 		++iMatches;
 
 	      }
-	    
-	    TRKMu_x_MB.push_back(x[0]);
-	    TRKMu_y_MB.push_back(y[0]);
-	    TRKMu_sector_MB.push_back(sector[0]);
-	    TRKMu_wheel_MB.push_back(wheel[0]);
-
 	  }
       }
-    
+
+	    
+    TRKMu_x_MB1.push_back(x[0]);
+    TRKMu_y_MB1.push_back(y[0]);
+    TRKMu_sector_MB1.push_back(sector[0]);
+    TRKMu_wheel_MB1.push_back(wheel[0]);
+
+    TRKMu_x_MB2.push_back(x[1]);
+    TRKMu_y_MB2.push_back(y[1]);
+    TRKMu_sector_MB2.push_back(sector[1]);
+    TRKMu_wheel_MB2.push_back(wheel[1]);
+
+    TRKMu_x_MB3.push_back(x[2]);
+    TRKMu_y_MB3.push_back(y[2]);
+    TRKMu_sector_MB3.push_back(sector[2]);
+    TRKMu_wheel_MB3.push_back(wheel[2]);
+
+    TRKMu_x_MB4.push_back(x[2]);
+    TRKMu_y_MB4.push_back(y[2]);
+    TRKMu_sector_MB4.push_back(sector[2]);
+    TRKMu_wheel_MB4.push_back(wheel[2]);
+
+    std::cout << "[TTreeGenerator::analyze] nMatches : " << iMatches << "\t";
+    for (auto & ch : stations) std::cout << ch << " "; std::cout << "\t";
+    for (auto & sec : sectors) std::cout << sec << " "; std::cout << "\t";
+    for (auto & wh : wheels) std::cout << wh << " "; std::cout << "\t";
+    std::cout << std::endl;
+
     if(nmuon->isCaloCompatibilityValid()) STAMu_caloCompatibility.push_back(nmuon->caloCompatibility());
     else STAMu_caloCompatibility.push_back(-999.);
     //extrapolate the muon to the MB2
@@ -1468,6 +1499,11 @@ void TTreeGenerator::beginJob()
 
   //HLT
   tree_->Branch("hlt_path",&hlt_path,32000,-1);
+  tree_->Branch("hlt_filter",&hlt_path,32000,-1);
+
+  tree_->Branch("hlt_filter_phi",&hlt_filter_phi);
+  tree_->Branch("hlt_filter_eta",&hlt_filter_eta);
+  tree_->Branch("hlt_filter_pt", &hlt_filter_pt);
 
   //digi variables
   tree_->Branch("digi_wheel",&digi_wheel);
@@ -1595,6 +1631,26 @@ void TTreeGenerator::beginJob()
   tree_->Branch("Mu_z_mb2_mu",&STAMu_z_mb2);
   tree_->Branch("Mu_phi_mb2_mu",&STAMu_phi_mb2);
   tree_->Branch("Mu_pseta_mb2_mu",&STAMu_pseta_mb2);
+
+  tree_->Branch("TRKMu_x_MB1",&TRKMu_x_MB1);
+  tree_->Branch("TRKMu_y_MB1",&TRKMu_y_MB1);
+  tree_->Branch("TRKMu_sector_MB1",&TRKMu_sector_MB1);
+  tree_->Branch("TRKMu_wheel_MB1",&TRKMu_wheel_MB1);
+
+  tree_->Branch("TRKMu_x_MB2",&TRKMu_x_MB2);
+  tree_->Branch("TRKMu_y_MB2",&TRKMu_y_MB2);
+  tree_->Branch("TRKMu_sector_MB2",&TRKMu_sector_MB2);
+  tree_->Branch("TRKMu_wheel_MB2",&TRKMu_wheel_MB2);
+
+  tree_->Branch("TRKMu_x_MB3",&TRKMu_x_MB3);
+  tree_->Branch("TRKMu_y_MB3",&TRKMu_y_MB3);
+  tree_->Branch("TRKMu_sector_MB3",&TRKMu_sector_MB3);
+  tree_->Branch("TRKMu_wheel_MB3",&TRKMu_wheel_MB3);
+
+  tree_->Branch("TRKMu_x_MB4",&TRKMu_x_MB4);
+  tree_->Branch("TRKMu_y_MB4",&TRKMu_y_MB4);
+  tree_->Branch("TRKMu_sector_MB4",&TRKMu_sector_MB4);
+  tree_->Branch("TRKMu_wheel_MB4",&TRKMu_wheel_MB4);
 
   //GMT
   tree_->Branch("gmt_bx",&gmt_bx);
@@ -1876,6 +1932,26 @@ inline void TTreeGenerator::clear_Arrays()
   STAMu_phi_mb2.clear();
   STAMu_pseta_mb2.clear();
 
+  TRKMu_x_MB1.clear();
+  TRKMu_y_MB1.clear();
+  TRKMu_sector_MB1.clear();
+  TRKMu_wheel_MB1.clear();
+
+  TRKMu_x_MB2.clear();
+  TRKMu_y_MB2.clear();
+  TRKMu_sector_MB2.clear();
+  TRKMu_wheel_MB2.clear();
+
+  TRKMu_x_MB3.clear();
+  TRKMu_y_MB3.clear();
+  TRKMu_sector_MB3.clear();
+  TRKMu_wheel_MB3.clear();
+
+  TRKMu_x_MB4.clear();
+  TRKMu_y_MB4.clear();
+  TRKMu_sector_MB4.clear();
+  TRKMu_wheel_MB4.clear();
+
   //GMT
   gmt_bx.clear();
   gmt_phi.clear();
@@ -1893,6 +1969,11 @@ inline void TTreeGenerator::clear_Arrays()
 
   //HLT
   hlt_path.clear();
+  hlt_filter.clear();
+
+  hlt_filter_phi.clear();
+  hlt_filter_eta.clear();
+  hlt_filter_pt.clear();
 
   // RPC rec hits
   rpc_region.clear();
@@ -1906,89 +1987,89 @@ inline void TTreeGenerator::clear_Arrays()
   rpc_roll.clear();
   rpc_ring.clear();
   
-        //Bmtf_Size.clear();
-   Bmtf_Pt.clear();
-   Bmtf_Eta.clear();
-   Bmtf_Phi.clear();
-   Bmtf_GlobalPhi.clear();
-   Bmtf_qual.clear();
-   Bmtf_ch.clear();
-   Bmtf_bx.clear();
-   Bmtf_processor.clear();
-   Bmtf_trAddress.clear();
-   Bmtf_wh.clear();
-   Bmtf_FineBit.clear();
-
-	Bmtf_phBx.clear();
-	Bmtf_phWh.clear();
-	Bmtf_phSe.clear();
-	Bmtf_phSt.clear();
-	Bmtf_phAng.clear();
-	Bmtf_phBandAng.clear();
-	Bmtf_phCode.clear();
-	Bmtf_phTs2Tag.clear();
-
-	Bmtf_thBx.clear();
-	Bmtf_thWh.clear();
-	Bmtf_thSe.clear();
-  	Bmtf_thSt.clear();
-	Bmtf_thTheta.clear();
-	Bmtf_thCode.clear();
-
-   RpcDigi_TwinMux_bx.clear();
-   RpcDigi_TwinMux_strip.clear();
-   RpcDigi_TwinMux_region.clear();
-   RpcDigi_TwinMux_ring.clear();
-   RpcDigi_TwinMux_station.clear();
-   RpcDigi_TwinMux_layer.clear();
-   RpcDigi_TwinMux_sector.clear();
-   RpcDigi_TwinMux_subsector.clear();
-   RpcDigi_TwinMux_roll.clear();
-   RpcDigi_TwinMux_trIndex.clear();
-   RpcDigi_TwinMux_det.clear();
-   RpcDigi_TwinMux_subdetId.clear();
-   RpcDigi_TwinMux_rawId.clear();
-
-         // Unpacking RPC rec hits
-   RpcRechit_TwinMux_region.clear();
-   RpcRechit_TwinMux_clusterSize.clear();
-   RpcRechit_TwinMux_strip.clear();
-   RpcRechit_TwinMux_bx.clear();
-   RpcRechit_TwinMux_station.clear();
-   RpcRechit_TwinMux_sector.clear();
-   RpcRechit_TwinMux_layer.clear();
-   RpcRechit_TwinMux_subsector.clear();
-   RpcRechit_TwinMux_roll.clear();
-   RpcRechit_TwinMux_ring.clear();
-   RpcRechit_TwinMux_Loc_x.clear();
-   RpcRechit_TwinMux_Loc_y.clear();
-   RpcRechit_TwinMux_Loc_z.clear(); 
-   RpcRechit_TwinMux_Loc_eta.clear(); 
-   RpcRechit_TwinMux_Loc_phi.clear(); 
-   RpcRechit_TwinMux_Glob_x.clear();
-   RpcRechit_TwinMux_Glob_y.clear();
-   RpcRechit_TwinMux_Glob_z.clear(); 
-   RpcRechit_TwinMux_Glob_eta.clear(); 
-   RpcRechit_TwinMux_Glob_phi.clear(); 
-
-   DT_extrapolated_OnRPC_BX.clear();
-   DT_extrapolated_OnRPC_Loc_x.clear();
-   DT_extrapolated_OnRPC_Loc_y.clear();
-   DT_extrapolated_OnRPC_Loc_z.clear();
-   DT_extrapolated_OnRPC_Loc_eta.clear();
-   DT_extrapolated_OnRPC_Loc_phi.clear();
-   DT_extrapolated_OnRPC_Glob_x.clear();
-   DT_extrapolated_OnRPC_Glob_y.clear();
-   DT_extrapolated_OnRPC_Glob_z.clear();
-   DT_extrapolated_OnRPC_Glob_eta.clear();
-   DT_extrapolated_OnRPC_Glob_phi.clear();
-   DT_extrapolated_OnRPC_Region.clear();
-   DT_extrapolated_OnRPC_Sector.clear();
-   DT_extrapolated_OnRPC_Station.clear();
-   DT_extrapolated_OnRPC_Layer.clear();
-   DT_extrapolated_OnRPC_Roll.clear();
-   DT_extrapolated_OnRPC_Ring.clear();
-   DT_extrapolated_OnRPC_Stripw.clear();
+  //Bmtf_Size.clear();
+  Bmtf_Pt.clear();
+  Bmtf_Eta.clear();
+  Bmtf_Phi.clear();
+  Bmtf_GlobalPhi.clear();
+  Bmtf_qual.clear();
+  Bmtf_ch.clear();
+  Bmtf_bx.clear();
+  Bmtf_processor.clear();
+  Bmtf_trAddress.clear();
+  Bmtf_wh.clear();
+  Bmtf_FineBit.clear();
+  
+  Bmtf_phBx.clear();
+  Bmtf_phWh.clear();
+  Bmtf_phSe.clear();
+  Bmtf_phSt.clear();
+  Bmtf_phAng.clear();
+  Bmtf_phBandAng.clear();
+  Bmtf_phCode.clear();
+  Bmtf_phTs2Tag.clear();
+  
+  Bmtf_thBx.clear();
+  Bmtf_thWh.clear();
+  Bmtf_thSe.clear();
+  Bmtf_thSt.clear();
+  Bmtf_thTheta.clear();
+  Bmtf_thCode.clear();
+  
+  RpcDigi_TwinMux_bx.clear();
+  RpcDigi_TwinMux_strip.clear();
+  RpcDigi_TwinMux_region.clear();
+  RpcDigi_TwinMux_ring.clear();
+  RpcDigi_TwinMux_station.clear();
+  RpcDigi_TwinMux_layer.clear();
+  RpcDigi_TwinMux_sector.clear();
+  RpcDigi_TwinMux_subsector.clear();
+  RpcDigi_TwinMux_roll.clear();
+  RpcDigi_TwinMux_trIndex.clear();
+  RpcDigi_TwinMux_det.clear();
+  RpcDigi_TwinMux_subdetId.clear();
+  RpcDigi_TwinMux_rawId.clear();
+  
+  // Unpacking RPC rec hits
+  RpcRechit_TwinMux_region.clear();
+  RpcRechit_TwinMux_clusterSize.clear();
+  RpcRechit_TwinMux_strip.clear();
+  RpcRechit_TwinMux_bx.clear();
+  RpcRechit_TwinMux_station.clear();
+  RpcRechit_TwinMux_sector.clear();
+  RpcRechit_TwinMux_layer.clear();
+  RpcRechit_TwinMux_subsector.clear();
+  RpcRechit_TwinMux_roll.clear();
+  RpcRechit_TwinMux_ring.clear();
+  RpcRechit_TwinMux_Loc_x.clear();
+  RpcRechit_TwinMux_Loc_y.clear();
+  RpcRechit_TwinMux_Loc_z.clear(); 
+  RpcRechit_TwinMux_Loc_eta.clear(); 
+  RpcRechit_TwinMux_Loc_phi.clear(); 
+  RpcRechit_TwinMux_Glob_x.clear();
+  RpcRechit_TwinMux_Glob_y.clear();
+  RpcRechit_TwinMux_Glob_z.clear(); 
+  RpcRechit_TwinMux_Glob_eta.clear(); 
+  RpcRechit_TwinMux_Glob_phi.clear(); 
+  
+  DT_extrapolated_OnRPC_BX.clear();
+  DT_extrapolated_OnRPC_Loc_x.clear();
+  DT_extrapolated_OnRPC_Loc_y.clear();
+  DT_extrapolated_OnRPC_Loc_z.clear();
+  DT_extrapolated_OnRPC_Loc_eta.clear();
+  DT_extrapolated_OnRPC_Loc_phi.clear();
+  DT_extrapolated_OnRPC_Glob_x.clear();
+  DT_extrapolated_OnRPC_Glob_y.clear();
+  DT_extrapolated_OnRPC_Glob_z.clear();
+  DT_extrapolated_OnRPC_Glob_eta.clear();
+  DT_extrapolated_OnRPC_Glob_phi.clear();
+  DT_extrapolated_OnRPC_Region.clear();
+  DT_extrapolated_OnRPC_Sector.clear();
+  DT_extrapolated_OnRPC_Station.clear();
+  DT_extrapolated_OnRPC_Layer.clear();
+  DT_extrapolated_OnRPC_Roll.clear();
+  DT_extrapolated_OnRPC_Ring.clear();
+  DT_extrapolated_OnRPC_Stripw.clear();
   
   return;
 }
