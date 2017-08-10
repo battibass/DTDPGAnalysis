@@ -5,16 +5,16 @@ This package contains the code needed for CMS DT Prompt Offline Analysis and for
 To install it and run DTNtuple production:
 
 ```
-cmsrel CMSSW_9_0_1
-cd CMSSW_9_0_1/src/
+cmsrel CMSSW_8_0_29
+cd CMSSW_8_0_29/src/
 
 cmsenv
 
-git clone https://github.com/ferrico/DTDPGAnalysis.git UserCode/DTDPGAnalysis
+git clone https://github.com/battibass/DTDPGAnalysis.git UserCode/DTDPGAnalysis
 
 cd UserCode/DTDPGAnalysis/
 
-git checkout DT_Extrapolation_on_RPC
+git checkout dt_rpc_trigger_bari
 
 cd ../../
 
