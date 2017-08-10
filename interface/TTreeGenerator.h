@@ -63,7 +63,9 @@ private:
   void fill_muons_variables(edm::Handle<reco::MuonCollection> MuList);
   void fill_gmt_variables(const edm::Handle<l1t::MuonBxCollection> & gmt);
   void fill_gt_variables(edm::Handle<L1GlobalTriggerReadoutRecord> gtrr, const L1GtTriggerMenu* menu);
-  void fill_hlt_variables(const edm::Event& e, edm::Handle<edm::TriggerResults> hltresults);
+  void fill_hlt_variables(const edm::Event& e, 
+			  edm::Handle<edm::TriggerResults> hltresults,
+			  edm::Handle<trigger::TriggerEvent> hltevent);
   void fill_rpc_variables(const edm::Event &e, edm::Handle<RPCRecHitCollection> rpcrechits);
   void fill_dtphi_info(const DTChamberRecSegment2D* phiSeg,const GeomDet* geomDet);
   void fill_dtz_info(const DTSLRecSegment2D* zSeg, const GeomDet* geomDet);
@@ -105,8 +107,10 @@ private:
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   edm::InputTag scalersSource_;
   edm::EDGetTokenT<LumiScalersCollection> scalersSourceToken_;
-  edm::InputTag triggerTag_;
-  edm::EDGetTokenT<edm::TriggerResults> triggerToken_ ;
+  edm::InputTag triggerResultTag_;
+  edm::EDGetTokenT<edm::TriggerResults> triggerResultToken_ ;
+  edm::InputTag triggerEventTag_;
+  edm::EDGetTokenT<trigger::TriggerEvent> triggerEventToken_ ;
   edm::InputTag lumiInputTag_;
   edm::EDGetTokenT<LumiDetails> lumiProducerToken_ ;
   edm::EDGetTokenT<LumiSummary> lumiSummaryToken_;
@@ -139,6 +143,7 @@ private:
   int dtltTwinMuxOutSize_;
   int dtltTwinMuxInSize_;
   int dtltTwinMuxThSize_;
+  int hltSize_;
   int gmtSize_;
   int STAMuSize_;
   int rpcRecHitSize_;

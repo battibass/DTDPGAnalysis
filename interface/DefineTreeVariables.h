@@ -33,6 +33,10 @@ float beam2Intensity;
 
 // HLT
 std::vector<TString> hlt_path;
+std::vector<TString> hlt_filter;
+std::vector<float>   hlt_filter_pt;
+std::vector<float>   hlt_filter_phi;
+std::vector<float>   hlt_filter_eta;
 
 //digi variables
 std::vector<short> digi_wheel;
@@ -169,6 +173,12 @@ std::vector<float> STAMu_caloCompatibility;
 std::vector<float> STAMu_z_mb2;
 std::vector<float> STAMu_phi_mb2;
 std::vector<float> STAMu_pseta_mb2;
+
+std::vector<float> TRKMu_x_MB;
+std::vector<float> TRKMu_y_MB;
+std::vector<short> TRKMu_sector_MB;
+std::vector<short> TRKMu_station_MB;
+std::vector<short> TRKMu_wheel_MB;
 
 //GMT
 std::vector<short> gmt_bx;

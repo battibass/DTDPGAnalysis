@@ -12,6 +12,8 @@
 <use name="FWCore/ParameterSet"/>
 <use name="FWCore/Utilities"/>
 <use name="Geometry/Records"/>
+<use name="DataFormats/DTDigi"/>
+<use name="DataFormats/RPCDigi"/>
 <use name="DataFormats/MuonReco"/>
 <use name="DataFormats/TrackReco"/>
 <use name="RecoMuon/TrackingTools"/>

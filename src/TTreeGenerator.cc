@@ -45,6 +45,7 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 
 #include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/HLTReco/interface/TriggerEvent.h"
 
 #include "DataFormats/Scalers/interface/LumiScalers.h"
 
@@ -182,8 +183,11 @@ TTreeGenerator::TTreeGenerator(const edm::ParameterSet& pset):
   gmtLabel_        = pset.getParameter<edm::InputTag>("gmtLabel");
   gmtToken_        = consumes<l1t::MuonBxCollection>(edm::InputTag(gmtLabel_));
 
-  triggerTag_      = pset.getParameter<edm::InputTag>("TriggerTag");
-  triggerToken_    = consumes<edm::TriggerResults>(edm::InputTag(triggerTag_));
+  triggerResultTag_   = pset.getParameter<edm::InputTag>("TriggerResultsTag");
+  triggerResultToken_ = consumes<edm::TriggerResults>(edm::InputTag(triggerResultTag_));
+
+  triggerEventTag_   = pset.getParameter<edm::InputTag>("TriggerEventTag");
+  triggerEventToken_ = consumes<trigger::TriggerEvent>(edm::InputTag(triggerEventTag_));
 
   gtLabel_         = pset.getParameter<edm::InputTag>("gtLabel"); // legacy
   gtToken_         = consumes<L1GlobalTriggerReadoutRecord>(edm::InputTag(gtLabel_)); //legacy
@@ -342,7 +346,10 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   const L1GtTriggerMenu* menu = menuRcd.product();
 
   edm::Handle<edm::TriggerResults>  hltresults;
-  if(!localDTmuons_) event.getByToken(triggerToken_, hltresults); 
+  if(!localDTmuons_) event.getByToken(triggerResultToken_, hltresults); 
+
+  edm::Handle<trigger::TriggerEvent>  hltevent;
+  if(!localDTmuons_) event.getByToken(triggerEventToken_, hltevent); 
 
   edm::Handle<RPCRecHitCollection> rpcHits;
   if(!localDTmuons_) event.getByToken(rpcRecHitToken_,rpcHits);
@@ -438,7 +445,7 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   if(runOnRaw_ && !localDTmuons_) fill_gt_variables(gtrc,menu); // legacy
     
   //HLT
-  if(!localDTmuons_) fill_hlt_variables(event,hltresults);
+  if(!localDTmuons_) fill_hlt_variables(event,hltresults,hltevent);
 
   // RPC
   if(!localDTmuons_) fill_rpc_variables(event,rpcHits);
@@ -934,16 +941,19 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
     if(!(nmuon->isStandAloneMuon())) continue;
     if(imuons >= STAMuSize_) break;
     const reco::TrackRef mutrackref = nmuon->outerTrack();
+
     STAMu_isMuGlobal.push_back(nmuon->isGlobalMuon());
     STAMu_isMuTracker.push_back(nmuon->isTrackerMuon());
     STAMu_numberOfChambers.push_back(nmuon->numberOfChambers());
     STAMu_numberOfMatches.push_back(nmuon->numberOfMatches());
     STAMu_numberOfHits.push_back(mutrackref->numberOfValidHits());
+
     Mu_px_mu.push_back(nmuon->px());
     Mu_py_mu.push_back(nmuon->py());
     Mu_pz_mu.push_back(nmuon->pz());
     Mu_phi_mu.push_back(nmuon->phi());
     Mu_eta_mu.push_back(nmuon->eta());
+
     STAMu_recHitsSize.push_back(mutrackref->recHitsSize());
     STAMu_normchi2Mu.push_back(mutrackref->chi2()/mutrackref->ndof());
     STAMu_chargeMu.push_back(mutrackref->charge());
@@ -951,6 +961,7 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
     STAMu_dzMu.push_back(mutrackref->dz(beamspot.position()));
     int segmIndex = 0;
     int segmWord = 0;
+
     std::vector<int> segmIndex_container;
     for (trackingRecHit_iterator recMu = mutrackref->recHitsBegin(); recMu!=mutrackref->recHitsEnd(); recMu++){
       DetId detid = (*recMu)->geographicalId(); 
@@ -975,17 +986,7 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
     }
     STAMu_segmIndex.push_back(segmWord);
     if(nmuon->isGlobalMuon() & AnaTrackGlobalMu_) { 
-      // This part  gives problems in MWGR16. All the calls glbmutrackref->... give similar error  (different Product ID number)
-      // RefCore: A request to resolve a reference to a product of type 'std::vector<reco::Track>' with ProductID '2:533'
-      // can not be satisfied because the product cannot be found.
-      // The problem is due to the fact that the Muon collections exists, 
-      // vector<reco::Muon>                    "muons"                     ""                "RECO"
-      // and also the track collecions for STA, 
-      // but not for GLOBAL!!!
-      //  vector<reco::Track>                   "globalCosmicMuons"         ""                "RECO"    
-      // AnalyzeTracksFromGlobalMuons_
-      // An extra variable is add  to control from python the possibility of skiping this part of the code
-      //
+
       const reco::TrackRef glbmutrackref = nmuon->innerTrack();
       GLBMu_normchi2Mu.push_back(glbmutrackref->chi2()/glbmutrackref->ndof());
       GLBMu_dxyMu.push_back(glbmutrackref->dxy(beamspot.position()));
@@ -998,8 +999,10 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
       GLBMu_ntkIsoR03.push_back(nmuon->isolationR03().nTracks);
       GLBMu_emIsoR03.push_back(nmuon->isolationR03().emEt);
       GLBMu_hadIsoR03.push_back(nmuon->isolationR03().hadEt);
+
     }
     else{
+
       GLBMu_normchi2Mu.push_back(-999.);
       GLBMu_dxyMu.push_back(-999.);
       GLBMu_dzMu.push_back(-999.);
@@ -1009,10 +1012,53 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
       GLBMu_ntkIsoR03.push_back(-999.);
       GLBMu_emIsoR03.push_back(-999.);
       GLBMu_hadIsoR03.push_back(-999.);
+
     }
+
+    Int_t iMatches = 0;
+    if ( nmuon->isMatchesValid() )
+      {
+	for ( const reco::MuonChamberMatch & match : nmuon->matches() )
+	  {
+	    
+	    int wheel[4]   = {-999, -999, -999, -999};
+	    int sector[4]  = {-999, -999, -999, -999};
+	    float x[4] = {-999., -999., -999., -999.};
+	    float y[4] = {-999., -999., -999., -999.};
+
+	    if (match.edgeX < -5. &&
+		match.edgeY < -5. &&
+		match.id.det() == DetId::Muon && 
+		match.id.subdetId() == MuonSubdetId::DT)
+	      {
+
+		DTChamberId dtId(match.id.rawId());
+
+		int ch  = dtId.station();
+		int sec = dtId.sector();
+		int wh  = dtId.wheel();
+		
+		x[ch -1] = match.x;
+		y[ch -1] = match.y;
+		sector[ch -1] = sec;
+		wheel[ch -1]  = wh;
+
+		++iMatches;
+
+	      }
+	    
+	    TRKMu_x_MB.push_back(x[0]);
+	    TRKMu_y_MB.push_back(y[0]);
+	    TRKMu_sector_MB.push_back(sector[0]);
+	    TRKMu_wheel_MB.push_back(wheel[0]);
+
+	  }
+      }
+    
     if(nmuon->isCaloCompatibilityValid()) STAMu_caloCompatibility.push_back(nmuon->caloCompatibility());
     else STAMu_caloCompatibility.push_back(-999.);
     //extrapolate the muon to the MB2
+
     TrajectoryStateOnSurface tsos;
     tsos = cylExtrapTrkSam(mutrackref,500.);  // track at MB2 radius - extrapolation
     if (tsos.isValid()){
@@ -1100,7 +1146,9 @@ void TTreeGenerator::fill_gt_variables(edm::Handle<L1GlobalTriggerReadoutRecord>
   return;
 }
 
-void TTreeGenerator::fill_hlt_variables(const edm::Event &e, edm::Handle<edm::TriggerResults> hltresults)
+void TTreeGenerator::fill_hlt_variables(const edm::Event &e, 
+					edm::Handle<edm::TriggerResults> hltresults,
+					edm::Handle<trigger::TriggerEvent> hltevent)
 {
   ihlt = 0; 
   const edm::TriggerNames TrigNames_ = e.triggerNames(*hltresults);
@@ -1113,7 +1161,41 @@ void TTreeGenerator::fill_hlt_variables(const edm::Event &e, edm::Handle<edm::Tr
       ihlt++;
     }
   }
+
+  const trigger::size_type nFilters(hltevent->sizeFilters());
+
+  for (trigger::size_type iFilter=0; iFilter!=nFilters; ++iFilter)
+    {
+
+      std::string filterTag = hltevent->filterTag(iFilter).encode();
+
+      if (filterTag.find("Mu")       != std::string::npos &&
+	  filterTag.find("Filtered") != std::string::npos &&
+	  filterTag.find("L3")       != std::string::npos)
+	{
+
+	  trigger::Keys objectKeys = hltevent->filterKeys(iFilter);
+	  const trigger::TriggerObjectCollection& triggerObjects(hltevent->getObjects());
+
+	  for (trigger::size_type iKey=0; iKey<objectKeys.size(); ++iKey)
+	    {
+	      trigger::size_type objKey = objectKeys.at(iKey);
+	      const trigger::TriggerObject& triggerObj(triggerObjects[objKey]);
+
+	      float trigObjPt = triggerObj.pt();
+	      float trigObjEta = triggerObj.eta();
+	      float trigObjPhi = triggerObj.phi();
+
+	      hlt_filter.push_back(filterTag);
+	      hlt_filter_pt.push_back(trigObjPt);
+	      hlt_filter_eta.push_back(trigObjEta);
+	      hlt_filter_phi.push_back(trigObjPhi);
+	    }
+	}
+    }
+      
   return;
+
 }
 
 void TTreeGenerator::fill_rpc_variables(const edm::Event &e, edm::Handle<RPCRecHitCollection> rpcrechits){
