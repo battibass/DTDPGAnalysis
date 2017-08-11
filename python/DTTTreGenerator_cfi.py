@@ -19,6 +19,7 @@ myDTNtuple = cms.EDAnalyzer('TTreeGenerator',
                             dtTrigTwinMuxOutSize = cms.int32(50),
                             dtTrigTwinMuxThSize = cms.int32(50),
                             gmtSize       = cms.int32(50), # legacy
+                            hltSize       = cms.int32(150),
                             STAMuSize     = cms.int32(20),
                             rpcRecHitSize = cms.int32(300),
                             PrimaryVertexTag = cms.InputTag("offlinePrimaryVertices"),

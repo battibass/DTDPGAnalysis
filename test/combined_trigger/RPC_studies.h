@@ -21,152 +21,153 @@
 #include "TLorentzVector.h"
 
 class RPC_studies {
-public :
-   TTree          *fChain;   //!pointer to the analyzed TTree or TChain
-   Int_t           fCurrent; //!current Tree number in a TChain
+ public :
+  TTree          *fChain;   //!pointer to the analyzed TTree or TChain
+  Int_t           fCurrent; //!current Tree number in a TChain
 
-   typedef struct 
-   {
-   	vector<int> index;
-   	vector<float> pt;
-   	vector<float> eta;
-   	vector<float> phi;
-   	bool probe;
-   } muons_vector; 
+  typedef struct 
+  {
+    vector<int> index;
+    vector<float> pt;
+    vector<float> eta;
+    vector<float> phi;
+    bool probe;
+  } muons_vector; 
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 			
-	int count = 0;
-	int station_1_num = 0;
-	int station_1_den = 0;
-	int station_2_num = 0;
-	int station_2_den = 0;
+  int count = 0;
+  int station_1_num = 0;
+  int station_1_den = 0;
+  int station_2_num = 0;
+  int station_2_den = 0;
 	
-	muons_vector muon_index;
+  muons_vector muon_index;
+  
+  TLorentzVector tag_muon;
+  TLorentzVector probe_muon;
+  
+  float delta_phi;
+  float delta_eta;
+  float deltaR_MB1;
+  float deltaR_MB2;
+  float min_DT_MB1_muon;
+  bool match_DT_MB1_muon;
+  float min_DT_MB2_muon;
+  bool match_DT_MB2_muon;
+  float pig = acos(-1.);
+  float MuPt, MuEta, MuPhi;
+  float eta_mu[2] = {-999,-999};
+  float phi_mu[2] = {-999,-999};
+  float pt_mu[2] = {-999,-999};
+  
+  // GLOBAL MUON CUTS   	
+  float D0_cut =1.0; // 0.2;
+  float Dz_cut = 24.; //24.;
+  float pt_cut=3.;  // def = 3
+  float pt_max=3000.;
+  float eta_cut = 1.2; 
+  float N_hits_cut = 4; 
+  float muchi2_cut=10.;
+  float npix_cut=1;
+  float ntkr_cut=5;
+  int ntrig_In_max = 7;
+  
+  float pt_localtrig_cut = 14.0;
+  
+  float clsCut = 3;
+  float rangestrips = 4;
+  int RPC_cluSize[2] = {0};
+  int RPC_BX[2][5][2][12] = {0};
+  float stripw[2] = {0};
+  
+  int den[2][5][2][12]= {0};
+  float min_layer[2];
+  float dist_layer[2];
+  
+  int dt_ring;
+  int dt_station;
+  int dt_sector;
+  
+  int iWh_In, iSt_In, iSec_In;
+  int iWh_Out, iSt_Out, iSec_Out;
+  int bx_In, bx_Out;
+  float min_dtSegm_In;
+  int extra_layer[2] = {-999,-999};
+  int dtsegment_index[2] = {-999,-999};
+  
+  bool rpc_extrapolation_mb1;
+  bool rpc_extrapolation_mb2;
+  
+  bool dt_extrapolation_mb1;
+  bool dt_extrapolation_mb2;
+  
+  int count_muon = 0;
 	
-	TLorentzVector tag_muon;
-	TLorentzVector probe_muon;
+  float delta_dtSegm_In;
+  float delta_dtSegm_Out;
 	
-	float delta_phi;
-	float delta_eta;
-   	float deltaR_MB1;
-   	float deltaR_MB2;
-   	float min_DT_MB1_muon;
-   	bool match_DT_MB1_muon;
-   	float min_DT_MB2_muon;
-   	bool match_DT_MB2_muon;
-   	float pig = acos(-1.);
-   	float MuPt, MuEta, MuPhi;
-   	float eta_mu[2] = {-999,-999};
-   	float phi_mu[2] = {-999,-999};
-   	float pt_mu[2] = {-999,-999};
-   	   	
-	// GLOBAL MUON CUTS   	
-   	float D0_cut =1.0; // 0.2;
-   	float Dz_cut = 24.; //24.;
-   	float pt_cut=3.;  // def = 3
-   	float pt_max=3000.;
-   	float eta_cut = 1.2; 
-   	float N_hits_cut = 4; 
-   	float muchi2_cut=10.;
-   	float npix_cut=1;
-   	float ntkr_cut=5;
-   	int ntrig_In_max = 7;
-   	
-   	float pt_localtrig_cut = 14.0;
-   	
-   	float clsCut = 3;
-   	float rangestrips = 4;
-   	int RPC_cluSize[2] = {0};
-   	int RPC_BX[2][5][2][12] = {0};
-   	float stripw[2] = {0};
+  
+  TH1F *h_Zmumu_Mass = new TH1F("Z boson mass", "Z boson mass", 160, 80, 120);
+  
+  // distance
+  TH1F *h_dist_DT_MB1_muon = new TH1F("Distance DT MB1 segment from muon", "Distance DT MB1 segment from muon", 100, 0, 10);
+  TH1F *h_dist_DT_MB2_muon = new TH1F("Distance DT MB2 segment from muon", "Distance DT MB2 segment from muon", 100, 0, 10);
+  
+  TH1F *h_dist_MB1_layer_1 = new TH1F("Distance on MB1 layer 1", "Distance on MB1 layer 1", 100, 0, 10);
+  TH1F *h_dist_MB1_layer_2 = new TH1F("Distance on MB1 layer 2", "Distance on MB1 layer 2", 100, 0, 10);
+  
+  TH1F *h_dist_MB2_layer_1 = new TH1F("Distance on MB2 layer 1", "Distance on MB2 layer 1", 100, 0, 10);
+  TH1F *h_dist_MB2_layer_2 = new TH1F("Distance on MB2 layer 2", "Distance on MB2 layer 2", 100, 0, 10);
+  // distance	
+  
+  // muon efficiency
+  TEfficiency* h_eff_pt_station_1 = new TEfficiency("Efficiency vs p_{T} on station 1", "Efficiency vs p_{T}; p_{T}; #epsilon", 40,0.,80.);
+  TEfficiency* h_eff_pt_station_2 = new TEfficiency("Efficiency vs p_{T} on station 2", "Efficiency vs p_{T}; p_{T}; #epsilon", 40,0.,80.);
+  
+  TH1F *h_num_pt_station_1 = new TH1F("Numerator for p_{T} on station 1", "Numerator for p_{T} on station 1", 40,0.,80.);
+  TH1F *h_num_pt_station_2 = new TH1F("Numerator for p_{T} on station 2", "Numerator for p_{T} on station 2", 40,0.,80.);
+  
+  TH1F *h_den_pt_station_1 = new TH1F("Denominator for p_{T} on station 1", "Denominator for p_{T} on station 1", 40,0.,80.);
+  TH1F *h_den_pt_station_2 = new TH1F("Denominator for p_{T} on station 2", "Denominator for p_{T} on station 2", 40,0.,80.);
+  
+  
+  TEfficiency* h_eff_eta_station_1 = new TEfficiency("Efficiency vs #eta on station 1","Efficiency vs #eta;#eta;#epsilon",20,-1.2,1.2);
+  TEfficiency* h_eff_eta_station_2 = new TEfficiency("Efficiency vs #eta on station 2","Efficiency vs #eta;#eta;#epsilon",20,-1.2,1.2);
 
-	int den[2][5][2][12]= {0};
-   	float min_layer[2];
-	float dist_layer[2];
-	
-	int dt_ring;
-	int dt_station;
-	int dt_sector;
-	
-	int iWh_In, iSt_In, iSec_In;
-	int iWh_Out, iSt_Out, iSec_Out;
-	int bx_In, bx_Out;
-	float min_dtSegm_In;
-	int extra_layer[2] = {-999,-999};
-	int dtsegment_index[2] = {-999,-999};
-	
-	bool rpc_extrapolation_mb1;
-	bool rpc_extrapolation_mb2;
-	
-	bool dt_extrapolation_mb1;
-	bool dt_extrapolation_mb2;
-	
-	int count_muon = 0;
-	
-	float delta_dtSegm_In;
-	float delta_dtSegm_Out;
-	
-	
-	TH1F *h_Zmumu_Mass = new TH1F("Z boson mass", "Z boson mass", 160, 80, 120);
-	
-	// distance
-	TH1F *h_dist_DT_MB1_muon = new TH1F("Distance DT MB1 segment from muon", "Distance DT MB1 segment from muon", 100, 0, 10);
-	TH1F *h_dist_DT_MB2_muon = new TH1F("Distance DT MB2 segment from muon", "Distance DT MB2 segment from muon", 100, 0, 10);
-	
-	TH1F *h_dist_MB1_layer_1 = new TH1F("Distance on MB1 layer 1", "Distance on MB1 layer 1", 100, 0, 10);
-	TH1F *h_dist_MB1_layer_2 = new TH1F("Distance on MB1 layer 2", "Distance on MB1 layer 2", 100, 0, 10);
+  TH1F *h_num_eta_station_1 = new TH1F("Numerator for #eta on station 1", "Numerator for #eta on station 1", 20, -1.2,1.2);
+  TH1F *h_num_eta_station_2 = new TH1F("Numerator for #eta on station 2", "Numerator for #eta on station 2", 20, -1.2,1.2);
+  
+  TH1F *h_den_eta_station_1 = new TH1F("Denominator for #eta on station 1", "Denominator for #eta on station 1", 20, -1.2,1.2);
+  TH1F *h_den_eta_station_2 = new TH1F("Denominator for #eta on station 2", "Denominator for #eta on station 2", 20, -1.2,1.2);
+  
+  
+  TEfficiency* h_eff_phi_station_1 = new TEfficiency("Efficiency vs #phi on station 1","Efficiency vs #phi;#phi;#epsilon", 25,-3.2,3.2);
+  TEfficiency* h_eff_phi_station_2 = new TEfficiency("Efficiency vs #phi on station 1","Efficiency vs #phi;#phi;#epsilon", 25,-3.2,3.2);
+  
+  TH1F *h_num_phi_station_1 = new TH1F("Numerator for #phi on station 1", "Numerator for #phi on station 1", 25,-3.2,3.2);
+  TH1F *h_num_phi_station_2 = new TH1F("Numerator for #phi on station 2", "Numerator for #phi on station 2", 25,-3.2,3.2);
+  
+  TH1F *h_den_phi_station_1 = new TH1F("Denominator for #phi on station 1", "Denominator for #phi on station 1", 25,-3.2,3.2);
+  TH1F *h_den_phi_station_2 = new TH1F("Denominator for #phi on station 2", "Denominator for #phi on station 2", 25,-3.2,3.2);
+  // muon efficiency	
+  
+  // Twin Mux
+  TH1F *h_BX_IN_MB1 = new TH1F("BX IN for MB1", "BX IN for MB1", 7, -3.5, 3.5);
+  TH1F *h_BX_OUT_MB1 = new TH1F("BX OUT for MB1", "BX OUT for MB1", 7, -3.5, 3.5);
+  TH1F *h_BX_IN_MB2 = new TH1F("BX IN for MB2", "BX IN for MB2", 7, -3.5, 3.5);
+  TH1F *h_BX_OUT_MB2 = new TH1F("BX OUT for MB2", "BX OUT for MB2", 7, -3.5, 3.5);
+  
+  TH1F *h_DeltaPhi_InOut_MB1 = new TH1F("#Delta#phi between TwinMux IN and DT Segment: MB1", "#Delta#phi between TwinMux IN and DT Segment: MB1", 80, -4, 4);
+  TH1F *h_DeltaPhi_InOut_MB2 = new TH1F("#Delta#phi between TwinMux IN and DT Segment: MB2", "#Delta#phi between TwinMux IN and DT Segment: MB2", 80, -4, 4);
+  // Twin Mux
+  
+  
+  // Declaration of leaf types
+  Int_t           runnumber;
+  Int_t           lumiblock;
+  Int_t           eventNumber;
 
-	TH1F *h_dist_MB2_layer_1 = new TH1F("Distance on MB2 layer 1", "Distance on MB2 layer 1", 100, 0, 10);
-	TH1F *h_dist_MB2_layer_2 = new TH1F("Distance on MB2 layer 2", "Distance on MB2 layer 2", 100, 0, 10);
-	// distance	
-	
-	// muon efficiency
-	TEfficiency* h_eff_pt_station_1 = new TEfficiency("Efficiency vs p_{T} on station 1", "Efficiency vs p_{T}; p_{T}; #epsilon", 40,0.,80.);
-	TEfficiency* h_eff_pt_station_2 = new TEfficiency("Efficiency vs p_{T} on station 2", "Efficiency vs p_{T}; p_{T}; #epsilon", 40,0.,80.);
-
-	TH1F *h_num_pt_station_1 = new TH1F("Numerator for p_{T} on station 1", "Numerator for p_{T} on station 1", 40,0.,80.);
-	TH1F *h_num_pt_station_2 = new TH1F("Numerator for p_{T} on station 2", "Numerator for p_{T} on station 2", 40,0.,80.);
-	
-	TH1F *h_den_pt_station_1 = new TH1F("Denominator for p_{T} on station 1", "Denominator for p_{T} on station 1", 40,0.,80.);
-	TH1F *h_den_pt_station_2 = new TH1F("Denominator for p_{T} on station 2", "Denominator for p_{T} on station 2", 40,0.,80.);
-	
-
-	TEfficiency* h_eff_eta_station_1 = new TEfficiency("Efficiency vs #eta on station 1","Efficiency vs #eta;#eta;#epsilon",20,-1.2,1.2);
-	TEfficiency* h_eff_eta_station_2 = new TEfficiency("Efficiency vs #eta on station 2","Efficiency vs #eta;#eta;#epsilon",20,-1.2,1.2);
-
-	TH1F *h_num_eta_station_1 = new TH1F("Numerator for #eta on station 1", "Numerator for #eta on station 1", 20, -1.2,1.2);
-	TH1F *h_num_eta_station_2 = new TH1F("Numerator for #eta on station 2", "Numerator for #eta on station 2", 20, -1.2,1.2);
-	
-	TH1F *h_den_eta_station_1 = new TH1F("Denominator for #eta on station 1", "Denominator for #eta on station 1", 20, -1.2,1.2);
-	TH1F *h_den_eta_station_2 = new TH1F("Denominator for #eta on station 2", "Denominator for #eta on station 2", 20, -1.2,1.2);
-
-
-	TEfficiency* h_eff_phi_station_1 = new TEfficiency("Efficiency vs #phi on station 1","Efficiency vs #phi;#phi;#epsilon", 25,-3.2,3.2);
-	TEfficiency* h_eff_phi_station_2 = new TEfficiency("Efficiency vs #phi on station 1","Efficiency vs #phi;#phi;#epsilon", 25,-3.2,3.2);
-	
-	TH1F *h_num_phi_station_1 = new TH1F("Numerator for #phi on station 1", "Numerator for #phi on station 1", 25,-3.2,3.2);
-	TH1F *h_num_phi_station_2 = new TH1F("Numerator for #phi on station 2", "Numerator for #phi on station 2", 25,-3.2,3.2);
-	
-	TH1F *h_den_phi_station_1 = new TH1F("Denominator for #phi on station 1", "Denominator for #phi on station 1", 25,-3.2,3.2);
-	TH1F *h_den_phi_station_2 = new TH1F("Denominator for #phi on station 2", "Denominator for #phi on station 2", 25,-3.2,3.2);
-	// muon efficiency	
-	
-	// Twin Mux
-	TH1F *h_BX_IN_MB1 = new TH1F("BX IN for MB1", "BX IN for MB1", 7, -3.5, 3.5);
-	TH1F *h_BX_OUT_MB1 = new TH1F("BX OUT for MB1", "BX OUT for MB1", 7, -3.5, 3.5);
-	TH1F *h_BX_IN_MB2 = new TH1F("BX IN for MB2", "BX IN for MB2", 7, -3.5, 3.5);
-	TH1F *h_BX_OUT_MB2 = new TH1F("BX OUT for MB2", "BX OUT for MB2", 7, -3.5, 3.5);
-	
-	TH1F *h_DeltaPhi_InOut_MB1 = new TH1F("#Delta#phi between TwinMux IN and DT Segment: MB1", "#Delta#phi between TwinMux IN and DT Segment: MB1", 80, -4, 4);
-	TH1F *h_DeltaPhi_InOut_MB2 = new TH1F("#Delta#phi between TwinMux IN and DT Segment: MB2", "#Delta#phi between TwinMux IN and DT Segment: MB2", 80, -4, 4);
-	// Twin Mux
-
-
-   // Declaration of leaf types
-   Int_t           runnumber;
-   Int_t           lumiblock;
-   Int_t           eventNumber;
 //    Float_t         timestamp;
 //    Int_t           bunchXing;
 //    Int_t           orbitNum;
@@ -184,7 +185,13 @@ public :
 //    Float_t         lumiperblock;
 //    Float_t         beam1Intensity;
 //    Float_t         beam2Intensity;
-   vector<TString> *hlt_path;
+
+  vector<TString> *hlt_path;
+  vector<TString> *hlt_filter;
+  vector<TString> *hlt_filter_phi;
+  vector<TString> *hlt_filter_eta;
+  vector<TString> *hlt_filter_pt;
+
 //    vector<short>   *digi_wheel;
 //    vector<short>   *digi_sector;
 //    vector<short>   *digi_station;
@@ -192,48 +199,50 @@ public :
 //    vector<short>   *digi_layer;
 //    vector<short>   *digi_wire;
 //    vector<float>   *digi_time;
-   vector<short>   *dtsegm4D_wheel;
-   vector<short>   *dtsegm4D_sector;
-   vector<short>   *dtsegm4D_station;
-   vector<short>   *dtsegm4D_hasPhi;
-   vector<short>   *dtsegm4D_hasZed;
-   vector<float>   *dtsegm4D_x_pos_loc;
-   vector<float>   *dtsegm4D_y_pos_loc;
-   vector<float>   *dtsegm4D_z_pos_loc;
-   vector<float>   *dtsegm4D_x_dir_loc;
-   vector<float>   *dtsegm4D_y_dir_loc;
-   vector<float>   *dtsegm4D_z_dir_loc;
-   vector<float>   *dtsegm4D_cosx;
-   vector<float>   *dtsegm4D_cosy;
-   vector<float>   *dtsegm4D_cosz;
-   vector<float>   *dtsegm4D_phi;
-   vector<float>   *dtsegm4D_theta;
-   vector<float>   *dtsegm4D_eta;
-   vector<float>   *dtsegm4D_t0;
-   vector<float>   *dtsegm4D_vdrift;
-   vector<float>   *dtsegm4D_phinormchisq;
-   vector<short>   *dtsegm4D_phinhits;
-   vector<float>   *dtsegm4D_znormchisq;
-   vector<short>   *dtsegm4D_znhits;
-   TClonesArray    *dtsegm4D_hitsExpPos;
-   TClonesArray    *dtsegm4D_hitsExpWire;
-   TClonesArray    *dtsegm4D_phi_hitsPos;
-   TClonesArray    *dtsegm4D_phi_hitsPosCh;
-   TClonesArray    *dtsegm4D_phi_hitsPosErr;
-   TClonesArray    *dtsegm4D_phi_hitsSide;
-   TClonesArray    *dtsegm4D_phi_hitsWire;
-   TClonesArray    *dtsegm4D_phi_hitsLayer;
-   TClonesArray    *dtsegm4D_phi_hitsSuperLayer;
-   TClonesArray    *dtsegm4D_phi_hitsTime;
-   TClonesArray    *dtsegm4D_phi_hitsTimeCali;
-   TClonesArray    *dtsegm4D_z_hitsPos;
-   TClonesArray    *dtsegm4D_z_hitsPosCh;
-   TClonesArray    *dtsegm4D_z_hitsPosErr;
-   TClonesArray    *dtsegm4D_z_hitsSide;
-   TClonesArray    *dtsegm4D_z_hitsWire;
-   TClonesArray    *dtsegm4D_z_hitsLayer;
-   TClonesArray    *dtsegm4D_z_hitsTime;
-   TClonesArray    *dtsegm4D_z_hitsTimeCali;
+
+  vector<short>   *dtsegm4D_wheel;
+  vector<short>   *dtsegm4D_sector;
+  vector<short>   *dtsegm4D_station;
+  vector<short>   *dtsegm4D_hasPhi;
+  vector<short>   *dtsegm4D_hasZed;
+  vector<float>   *dtsegm4D_x_pos_loc;
+  vector<float>   *dtsegm4D_y_pos_loc;
+  vector<float>   *dtsegm4D_z_pos_loc;
+  vector<float>   *dtsegm4D_x_dir_loc;
+  vector<float>   *dtsegm4D_y_dir_loc;
+  vector<float>   *dtsegm4D_z_dir_loc;
+  vector<float>   *dtsegm4D_cosx;
+  vector<float>   *dtsegm4D_cosy;
+  vector<float>   *dtsegm4D_cosz;
+  vector<float>   *dtsegm4D_phi;
+  vector<float>   *dtsegm4D_theta;
+  vector<float>   *dtsegm4D_eta;
+  vector<float>   *dtsegm4D_t0;
+  vector<float>   *dtsegm4D_vdrift;
+  vector<float>   *dtsegm4D_phinormchisq;
+  vector<short>   *dtsegm4D_phinhits;
+  vector<float>   *dtsegm4D_znormchisq;
+  vector<short>   *dtsegm4D_znhits;
+  TClonesArray    *dtsegm4D_hitsExpPos;
+  TClonesArray    *dtsegm4D_hitsExpWire;
+  TClonesArray    *dtsegm4D_phi_hitsPos;
+  TClonesArray    *dtsegm4D_phi_hitsPosCh;
+  TClonesArray    *dtsegm4D_phi_hitsPosErr;
+  TClonesArray    *dtsegm4D_phi_hitsSide;
+  TClonesArray    *dtsegm4D_phi_hitsWire;
+  TClonesArray    *dtsegm4D_phi_hitsLayer;
+  TClonesArray    *dtsegm4D_phi_hitsSuperLayer;
+  TClonesArray    *dtsegm4D_phi_hitsTime;
+  TClonesArray    *dtsegm4D_phi_hitsTimeCali;
+  TClonesArray    *dtsegm4D_z_hitsPos;
+  TClonesArray    *dtsegm4D_z_hitsPosCh;
+  TClonesArray    *dtsegm4D_z_hitsPosErr;
+  TClonesArray    *dtsegm4D_z_hitsSide;
+  TClonesArray    *dtsegm4D_z_hitsWire;
+  TClonesArray    *dtsegm4D_z_hitsLayer;
+  TClonesArray    *dtsegm4D_z_hitsTime;
+  TClonesArray    *dtsegm4D_z_hitsTimeCali;
+
 //    vector<short>   *cscsegm_ring;
 //    vector<short>   *cscsegm_chamber;
 //    vector<short>   *cscsegm_station;
@@ -244,57 +253,81 @@ public :
 //    vector<float>   *cscsegm_eta;
 //    vector<float>   *cscsegm_normchisq;
 //    vector<short>   *cscsegm_nRecHits;
-   vector<short>   *ltTwinMuxIn_wheel;
-   vector<short>   *ltTwinMuxIn_sector;
-   vector<short>   *ltTwinMuxIn_station;
-   vector<short>   *ltTwinMuxIn_quality;
-   vector<short>   *ltTwinMuxIn_bx;
-   vector<float>   *ltTwinMuxIn_phi;
-   vector<float>   *ltTwinMuxIn_phiB;
-   vector<short>   *ltTwinMuxIn_is2nd;
-   vector<short>   *ltTwinMuxOut_wheel;
-   vector<short>   *ltTwinMuxOut_sector;
-   vector<short>   *ltTwinMuxOut_station;
-   vector<short>   *ltTwinMuxOut_quality;
-   vector<short>   *ltTwinMuxOut_rpcbit;
-   vector<short>   *ltTwinMuxOut_bx;
-   vector<float>   *ltTwinMuxOut_phi;
-   vector<float>   *ltTwinMuxOut_phiB;
-   vector<short>   *ltTwinMuxOut_is2nd;
+
+  vector<short>   *ltTwinMuxIn_wheel;
+  vector<short>   *ltTwinMuxIn_sector;
+  vector<short>   *ltTwinMuxIn_station;
+  vector<short>   *ltTwinMuxIn_quality;
+  vector<short>   *ltTwinMuxIn_bx;
+  vector<float>   *ltTwinMuxIn_phi;
+  vector<float>   *ltTwinMuxIn_phiB;
+  vector<short>   *ltTwinMuxIn_is2nd;
+  vector<short>   *ltTwinMuxOut_wheel;
+  vector<short>   *ltTwinMuxOut_sector;
+  vector<short>   *ltTwinMuxOut_station;
+  vector<short>   *ltTwinMuxOut_quality;
+  vector<short>   *ltTwinMuxOut_rpcbit;
+  vector<short>   *ltTwinMuxOut_bx;
+  vector<float>   *ltTwinMuxOut_phi;
+  vector<float>   *ltTwinMuxOut_phiB;
+  vector<short>   *ltTwinMuxOut_is2nd;
+
 //    vector<short>   *ltTwinMux_thWheel;
 //    vector<short>   *ltTwinMux_thSector;
 //    vector<short>   *ltTwinMux_thStation;
 //    vector<short>   *ltTwinMux_thBx;
 //    vector<short>   *ltTwinMux_thHits;
-   vector<short>   *Mu_isMuGlobal;
-   vector<short>   *Mu_isMuTracker;
-   vector<int>     *Mu_numberOfChambers_sta;
-   vector<int>     *Mu_numberOfMatches_sta;
-   vector<int>     *Mu_numberOfHits_sta;
-   vector<int>     *Mu_segmentIndex_sta;
-   vector<float>   *Mu_px;
-   vector<float>   *Mu_py;
-   vector<float>   *Mu_pz;
-   vector<float>   *Mu_phi;
-   vector<float>   *Mu_eta;
-   vector<short>   *Mu_recHitsSize;
-   vector<float>   *Mu_normchi2_sta;
-   vector<short>   *Mu_charge;
-   vector<float>   *Mu_dxy_sta;
-   vector<float>   *Mu_dz_sta;
-   vector<float>   *Mu_normchi2_glb;
-   vector<float>   *Mu_dxy_glb;
-   vector<float>   *Mu_dz_glb;
-   vector<int>     *Mu_numberOfPixelHits_glb;
-   vector<int>     *Mu_numberOfTrackerHits_glb;
-   vector<float>   *Mu_tkIsoR03_glb;
-   vector<float>   *Mu_ntkIsoR03_glb;
-   vector<float>   *Mu_emIsoR03_glb;
-   vector<float>   *Mu_hadIsoR03_glb;
-   vector<float>   *STAMu_caloCompatibility;
-   vector<float>   *Mu_z_mb2_mu;
-   vector<float>   *Mu_phi_mb2_mu;
-   vector<float>   *Mu_pseta_mb2_mu;
+
+  vector<short>   *Mu_isMuGlobal;
+  vector<short>   *Mu_isMuTracker;
+  vector<int>     *Mu_numberOfChambers_sta;
+  vector<int>     *Mu_numberOfMatches_sta;
+  vector<int>     *Mu_numberOfHits_sta;
+  vector<int>     *Mu_segmentIndex_sta;
+  vector<float>   *Mu_px;
+  vector<float>   *Mu_py;
+  vector<float>   *Mu_pz;
+  vector<float>   *Mu_phi;
+  vector<float>   *Mu_eta;
+  vector<short>   *Mu_recHitsSize;
+  vector<float>   *Mu_normchi2_sta;
+  vector<short>   *Mu_charge;
+  vector<float>   *Mu_dxy_sta;
+  vector<float>   *Mu_dz_sta;
+  vector<float>   *Mu_normchi2_glb;
+  vector<float>   *Mu_dxy_glb;
+  vector<float>   *Mu_dz_glb;
+  vector<int>     *Mu_numberOfPixelHits_glb;
+  vector<int>     *Mu_numberOfTrackerHits_glb;
+  vector<float>   *Mu_tkIsoR03_glb;
+  vector<float>   *Mu_ntkIsoR03_glb;
+  vector<float>   *Mu_emIsoR03_glb;
+  vector<float>   *Mu_hadIsoR03_glb;
+  vector<float>   *STAMu_caloCompatibility;
+  vector<float>   *Mu_z_mb2_mu;
+  vector<float>   *Mu_phi_mb2_mu;
+  vector<float>   *Mu_pseta_mb2_mu;
+
+  vector<float>   *Mu_x_MB1;
+  vector<float>   *Mu_y_MB1;
+  vector<float>   *Mu_wheel_MB1;
+  vector<float>   *Mu_sector_MB1;
+
+  vector<float>   *Mu_x_MB2;
+  vector<float>   *Mu_y_MB2;
+  vector<float>   *Mu_wheel_MB2;
+  vector<float>   *Mu_sector_MB2;
+
+  vector<float>   *Mu_x_MB3;
+  vector<float>   *Mu_y_MB3;
+  vector<float>   *Mu_wheel_MB3;
+  vector<float>   *Mu_sector_MB3;
+
+  vector<float>   *Mu_x_MB4;
+  vector<float>   *Mu_y_MB4;
+  vector<float>   *Mu_wheel_MB4;
+  vector<float>   *Mu_sector_MB4;
+
 //    vector<short>   *gmt_bx;
 //    vector<float>   *gmt_phi;
 //    vector<float>   *gmt_eta;
@@ -317,16 +350,17 @@ public :
 //    vector<int>     *rpc_roll;
 //    vector<int>     *rpc_ring;
 //    Short_t         Ndigis;
-   Short_t         Ndtsegments;
+
+  Short_t         Ndtsegments;
 //    Short_t         Ncscsegments;
-   Short_t         NdtltTwinMuxOut;
-   Short_t         NdtltTwinMuxIn;
+  Short_t         NdtltTwinMuxOut;
+  Short_t         NdtltTwinMuxIn;
 //    Short_t         NdtltTwinMux_th;
-   Short_t         Nmuons;
+  Short_t         Nmuons;
 //    Short_t         Ngmt;
 //    Short_t         Ngtalgo;
 //    Short_t         Ngttechtrig;
-//    Short_t         Nhlt;
+  Short_t         Nhlt;
 //    Short_t         NrpcRecHits;
 //    vector<short>   *bmtfPt;
 //    vector<short>   *bmtfEta;
@@ -370,46 +404,46 @@ public :
 //    vector<int>     *RpcDigiTwinMuxDet;
 //    vector<int>     *RpcDigiTwinMuxSubdetId;
 //    vector<int>     *RpcDigiTwinMuxRawId;
-   Short_t         NirpcrechitsTwinMux;
-   vector<int>     *RpcRecHitTwinMuxRegion;
-   vector<int>     *RpcRecHitTwinMuxClusterSize;
-   vector<int>     *RpcRecHitTwinMuxStrip;
-   vector<int>     *RpcRecHitTwinMuxBx;
-   vector<int>     *RpcRecHitTwinMuxStation;
-   vector<int>     *RpcRecHitTwinMuxSector;
-   vector<int>     *RpcRecHitTwinMuxLayer;
-   vector<int>     *RpcRecHitTwinMuxSubsector;
-   vector<int>     *RpcRecHitTwinMuxRoll;
-   vector<int>     *RpcRecHitTwinMuxRing;
-   vector<float>   *RpcRechitTwinMuxLocX;
-   vector<float>   *RpcRechitTwinMuxLocY;
-   vector<float>   *RpcRechitTwinMuxLocZ;
-   vector<float>   *RpcRechitTwinMuxGlobX;
-   vector<float>   *RpcRechitTwinMuxGlobY;
-   vector<float>   *RpcRechitTwinMuxGlobZ;
-   vector<float>   *RpcRechitTwinMuxGlobPhi;
-   vector<float>   *DTextrapolatedOnRPCBX;
-   vector<float>   *DTextrapolatedOnRPCLocX;
-   vector<float>   *DTextrapolatedOnRPCLocY;
-   vector<float>   *DTextrapolatedOnRPCLocZ;
-   vector<float>   *DTextrapolatedOnRPCGlobX;
-   vector<float>   *DTextrapolatedOnRPCGlobY;
-   vector<float>   *DTextrapolatedOnRPCGlobZ;
-   vector<float>   *DTextrapolatedOnRPCGlobEta;
-   vector<float>   *DTextrapolatedOnRPCGlobPhi;
-   vector<float>   *DTextrapolatedOnRPCRegion;
-   vector<float>   *DTextrapolatedOnRPCSector;
-   vector<float>   *DTextrapolatedOnRPCStation;
-   vector<float>   *DTextrapolatedOnRPCLayer;
-   vector<float>   *DTextrapolatedOnRPCRoll;
-   vector<float>   *DTextrapolatedOnRPCRing;
-   vector<float>   *DTextrapolatedOnRPCStripw;
-   Short_t         NDTsegmentonRPC;
-
-   // List of branches
-   TBranch        *b_runnumber;   //!
-   TBranch        *b_lumiblock;   //!
-   TBranch        *b_eventNumber;   //!
+  Short_t         NirpcrechitsTwinMux;
+  vector<int>     *RpcRecHitTwinMuxRegion;
+  vector<int>     *RpcRecHitTwinMuxClusterSize;
+  vector<int>     *RpcRecHitTwinMuxStrip;
+  vector<int>     *RpcRecHitTwinMuxBx;
+  vector<int>     *RpcRecHitTwinMuxStation;
+  vector<int>     *RpcRecHitTwinMuxSector;
+  vector<int>     *RpcRecHitTwinMuxLayer;
+  vector<int>     *RpcRecHitTwinMuxSubsector;
+  vector<int>     *RpcRecHitTwinMuxRoll;
+  vector<int>     *RpcRecHitTwinMuxRing;
+  vector<float>   *RpcRechitTwinMuxLocX;
+  vector<float>   *RpcRechitTwinMuxLocY;
+  vector<float>   *RpcRechitTwinMuxLocZ;
+  vector<float>   *RpcRechitTwinMuxGlobX;
+  vector<float>   *RpcRechitTwinMuxGlobY;
+  vector<float>   *RpcRechitTwinMuxGlobZ;
+  vector<float>   *RpcRechitTwinMuxGlobPhi;
+  vector<float>   *DTextrapolatedOnRPCBX;
+  vector<float>   *DTextrapolatedOnRPCLocX;
+  vector<float>   *DTextrapolatedOnRPCLocY;
+  vector<float>   *DTextrapolatedOnRPCLocZ;
+  vector<float>   *DTextrapolatedOnRPCGlobX;
+  vector<float>   *DTextrapolatedOnRPCGlobY;
+  vector<float>   *DTextrapolatedOnRPCGlobZ;
+  vector<float>   *DTextrapolatedOnRPCGlobEta;
+  vector<float>   *DTextrapolatedOnRPCGlobPhi;
+  vector<float>   *DTextrapolatedOnRPCRegion;
+  vector<float>   *DTextrapolatedOnRPCSector;
+  vector<float>   *DTextrapolatedOnRPCStation;
+  vector<float>   *DTextrapolatedOnRPCLayer;
+  vector<float>   *DTextrapolatedOnRPCRoll;
+  vector<float>   *DTextrapolatedOnRPCRing;
+  vector<float>   *DTextrapolatedOnRPCStripw;
+  Short_t         NDTsegmentonRPC;
+  
+  // List of branches
+  TBranch        *b_runnumber;   //!
+  TBranch        *b_lumiblock;   //!
+  TBranch        *b_eventNumber;   //!
 //    TBranch        *b_timestamp;   //!
 //    TBranch        *b_bunchXing;   //!
 //    TBranch        *b_orbitNum;   //!
@@ -428,6 +462,10 @@ public :
 //    TBranch        *b_beam1Intensity;   //!
 //    TBranch        *b_beam2Intensity;   //!
    TBranch        *b_hlt_path;   //!
+   TBranch        *b_hlt_filter;   //!
+   TBranch        *b_hlt_filter_phi;   //!
+   TBranch        *b_hlt_filter_eta;   //!
+   TBranch        *b_hlt_filter_pt;    //!
 //    TBranch        *b_digi_wheel;   //!
 //    TBranch        *b_digi_sector;   //!
 //    TBranch        *b_digi_station;   //!
@@ -538,6 +576,27 @@ public :
    TBranch        *b_Mu_z_mb2_mu;   //!
    TBranch        *b_Mu_phi_mb2_mu;   //!
    TBranch        *b_Mu_pseta_mb2_mu;   //!
+
+   TBranch   *b_Mu_x_MB1;
+   TBranch   *b_Mu_y_MB1;
+   TBranch   *b_Mu_wheel_MB1;
+   TBranch   *b_Mu_sector_MB1;
+
+   TBranch   *b_Mu_x_MB2;
+   TBranch   *b_Mu_y_MB2;
+   TBranch   *b_Mu_wheel_MB2;
+   TBranch   *b_Mu_sector_MB2;
+
+   TBranch   *b_Mu_x_MB3;
+   TBranch   *b_Mu_y_MB3;
+   TBranch   *b_Mu_wheel_MB3;
+   TBranch   *b_Mu_sector_MB3;
+
+   TBranch   *b_Mu_x_MB4;
+   TBranch   *b_Mu_y_MB4;
+   TBranch   *b_Mu_wheel_MB4;
+   TBranch   *b_Mu_sector_MB4;
+
 //    TBranch        *b_gmt_bx;   //!
 //    TBranch        *b_gmt_phi;   //!
 //    TBranch        *b_gmt_eta;   //!
@@ -569,7 +628,7 @@ public :
 //    TBranch        *b_Ngmt;   //!
 //    TBranch        *b_Ngtalgo;   //!
 //    TBranch        *b_Ngttt;   //!
-//    TBranch        *b_Nhlt;   //!
+   TBranch        *b_Nhlt;   //!
 //    TBranch        *b_NrpcRecHits;   //!
 //    TBranch        *b_bmtfPt;   //!
 //    TBranch        *b_bmtfEta;   //!
@@ -674,15 +733,12 @@ RPC_studies::RPC_studies(TTree *tree) : fChain(0)
 // used to generate this class and read the Tree.
    if (tree == 0) {
 //       TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/afs/cern.ch/work/f/ferrico/private/DT_update/CMSSW_9_0_0_pre4/src/UserCode/DTDPGAnalysis/test/DTNtuple_283830.root");
-		TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/afs/cern.ch/work/f/ferrico/public/DTNtuple/DTNtuple_RunH.root");
-      
-      if (!f || !f->IsOpen()) {
-         f = new TFile("/afs/cern.ch/work/f/ferrico/public/DTNtuple/DTNtuple_RunH.root");
-//          f = new TFile("/afs/cern.ch/work/f/ferrico/private/DT_update/CMSSW_9_0_0_pre4/src/UserCode/DTDPGAnalysis/test/DTNtuple_283830.root");
-
-
-      }
-      f->GetObject("DTTree",tree);
+     TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("../DTNtuple.root");
+     
+     if (!f || !f->IsOpen()) {
+       f = new TFile("../DTNtuple.root");
+     }
+     f->GetObject("DTTree",tree);
 
    }
    Init(tree);
@@ -725,6 +781,10 @@ void RPC_studies::Init(TTree *tree)
 
    // Set object pointer
    hlt_path = 0;
+   hlt_filter = 0;
+   hlt_filter_phi = 0;
+   hlt_filter_eta = 0;
+   hlt_filter_pt  = 0;
 //    digi_wheel = 0;
 //    digi_sector = 0;
 //    digi_station = 0;
@@ -835,6 +895,23 @@ void RPC_studies::Init(TTree *tree)
    Mu_z_mb2_mu = 0;
    Mu_phi_mb2_mu = 0;
    Mu_pseta_mb2_mu = 0;
+   Mu_x_MB1 = 0;
+   Mu_y_MB1 = 0;
+   Mu_wheel_MB1  = 0;
+   Mu_sector_MB1 = 0;
+   Mu_x_MB2 = 0;
+   Mu_y_MB2 = 0;
+   Mu_wheel_MB2  = 0;
+   Mu_sector_MB2 = 0;
+   Mu_x_MB3 = 0;
+   Mu_y_MB3 = 0;
+   Mu_wheel_MB3  = 0;
+   Mu_sector_MB3 = 0;
+   Mu_x_MB4 = 0;
+   Mu_y_MB4 = 0;
+   Mu_wheel_MB4  = 0;
+   Mu_sector_MB4 = 0;
+
 //    gmt_bx = 0;
 //    gmt_phi = 0;
 //    gmt_eta = 0;
@@ -894,6 +971,7 @@ void RPC_studies::Init(TTree *tree)
 //    RpcDigiTwinMuxDet = 0;
 //    RpcDigiTwinMuxSubdetId = 0;
 //    RpcDigiTwinMuxRawId = 0;
+
    RpcRecHitTwinMuxRegion = 0;
    RpcRecHitTwinMuxClusterSize = 0;
    RpcRecHitTwinMuxStrip = 0;
@@ -953,7 +1031,13 @@ void RPC_studies::Init(TTree *tree)
 //    fChain->SetBranchAddress("lumiperblock", &lumiperblock, &b_lumiperblock);
 //    fChain->SetBranchAddress("beam1Intensity", &beam1Intensity, &b_beam1Intensity);
 //    fChain->SetBranchAddress("beam2Intensity", &beam2Intensity, &b_beam2Intensity);
+
    fChain->SetBranchAddress("hlt_path", &hlt_path, &b_hlt_path);
+   fChain->SetBranchAddress("hlt_filter", &hlt_filter, &b_hlt_filter);
+   fChain->SetBranchAddress("hlt_filter_phi", &hlt_filter_phi, &b_hlt_filter_phi);
+   fChain->SetBranchAddress("hlt_filter_eta", &hlt_filter_eta, &b_hlt_filter_eta);
+   fChain->SetBranchAddress("hlt_filter_pt",  &hlt_filter_pt, &b_hlt_filter_pt);
+
 //    fChain->SetBranchAddress("digi_wheel", &digi_wheel, &b_digi_wheel);
 //    fChain->SetBranchAddress("digi_sector", &digi_sector, &b_digi_sector);
 //    fChain->SetBranchAddress("digi_station", &digi_station, &b_digi_station);
@@ -961,6 +1045,7 @@ void RPC_studies::Init(TTree *tree)
 //    fChain->SetBranchAddress("digi_layer", &digi_layer, &b_digi_layer);
 //    fChain->SetBranchAddress("digi_wire", &digi_wire, &b_digi_wire);
 //    fChain->SetBranchAddress("digi_time", &digi_time, &b_digi_time);
+
    fChain->SetBranchAddress("dtsegm4D_wheel", &dtsegm4D_wheel, &b_dtsegm4D_wheel);
    fChain->SetBranchAddress("dtsegm4D_sector", &dtsegm4D_sector, &b_dtsegm4D_sector);
    fChain->SetBranchAddress("dtsegm4D_station", &dtsegm4D_station, &b_dtsegm4D_station);
@@ -1003,6 +1088,7 @@ void RPC_studies::Init(TTree *tree)
    fChain->SetBranchAddress("dtsegm4D_z_hitsLayer", &dtsegm4D_z_hitsLayer, &b_dtsegm4D_z_hitsLayer);
    fChain->SetBranchAddress("dtsegm4D_z_hitsTime", &dtsegm4D_z_hitsTime, &b_dtsegm4D_z_hitsTime);
    fChain->SetBranchAddress("dtsegm4D_z_hitsTimeCali", &dtsegm4D_z_hitsTimeCali, &b_dtsegm4D_z_hitsTimeCali);
+
 //    fChain->SetBranchAddress("cscsegm_ring", &cscsegm_ring, &b_cscsegm_ring);
 //    fChain->SetBranchAddress("cscsegm_chamber", &cscsegm_chamber, &b_cscsegm_chamber);
 //    fChain->SetBranchAddress("cscsegm_station", &cscsegm_station, &b_cscsegm_station);
@@ -1013,6 +1099,7 @@ void RPC_studies::Init(TTree *tree)
 //    fChain->SetBranchAddress("cscsegm_eta", &cscsegm_eta, &b_cscsegm_eta);
 //    fChain->SetBranchAddress("cscsegm_normchisq", &cscsegm_normchisq, &b_cscsegm_normchisq);
 //    fChain->SetBranchAddress("cscsegm_nRecHits", &cscsegm_nRecHits, &b_cscsegm_nRecHits);
+
    fChain->SetBranchAddress("ltTwinMuxIn_wheel", &ltTwinMuxIn_wheel, &b_ltTwinMuxIn_wheel);
    fChain->SetBranchAddress("ltTwinMuxIn_sector", &ltTwinMuxIn_sector, &b_ltTwinMuxIn_sector);
    fChain->SetBranchAddress("ltTwinMuxIn_station", &ltTwinMuxIn_station, &b_ltTwinMuxIn_station);
@@ -1030,11 +1117,13 @@ void RPC_studies::Init(TTree *tree)
    fChain->SetBranchAddress("ltTwinMuxOut_phi", &ltTwinMuxOut_phi, &b_ltTwinMuxOut_phi);
    fChain->SetBranchAddress("ltTwinMuxOut_phiB", &ltTwinMuxOut_phiB, &b_ltTwinMuxOut_phiB);
    fChain->SetBranchAddress("ltTwinMuxOut_is2nd", &ltTwinMuxOut_is2nd, &b_ltTwinMuxOut_is2nd);
+
 //    fChain->SetBranchAddress("ltTwinMux_thWheel", &ltTwinMux_thWheel, &b_ltTwinMux_thWheel);
 //    fChain->SetBranchAddress("ltTwinMux_thSector", &ltTwinMux_thSector, &b_ltTwinMux_thSector);
 //    fChain->SetBranchAddress("ltTwinMux_thStation", &ltTwinMux_thStation, &b_ltTwinMux_thStation);
 //    fChain->SetBranchAddress("ltTwinMux_thBx", &ltTwinMux_thBx, &b_ltTwinMux_thBx);
 //    fChain->SetBranchAddress("ltTwinMux_thHits", &ltTwinMux_thHits, &b_ltTwinMux_thHits);
+
    fChain->SetBranchAddress("Mu_isMuGlobal", &Mu_isMuGlobal, &b_Mu_isMuGlobal);
    fChain->SetBranchAddress("Mu_isMuTracker", &Mu_isMuTracker, &b_Mu_isMuTracker);
    fChain->SetBranchAddress("Mu_numberOfChambers_sta", &Mu_numberOfChambers_sta, &b_Mu_numberOfChambers_sta);
@@ -1095,7 +1184,7 @@ void RPC_studies::Init(TTree *tree)
 //    fChain->SetBranchAddress("Ngmt", &Ngmt, &b_Ngmt);
 //    fChain->SetBranchAddress("Ngtalgo", &Ngtalgo, &b_Ngtalgo);
 //    fChain->SetBranchAddress("Ngttechtrig", &Ngttechtrig, &b_Ngttt);
-//    fChain->SetBranchAddress("Nhlt", &Nhlt, &b_Nhlt);
+   fChain->SetBranchAddress("Nhlt", &Nhlt, &b_Nhlt);
 //    fChain->SetBranchAddress("NrpcRecHits", &NrpcRecHits, &b_NrpcRecHits);
 //    fChain->SetBranchAddress("bmtfPt", &bmtfPt, &b_bmtfPt);
 //    fChain->SetBranchAddress("bmtfEta", &bmtfEta, &b_bmtfEta);

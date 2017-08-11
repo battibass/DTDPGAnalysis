@@ -1,4 +1,4 @@
-//
+///
 // Package:    TTreeGenerator
 // Class:      TTreeGenerator
 // 
@@ -84,7 +84,6 @@
 #include "CalibMuon/DTDigiSync/interface/DTTTrigSyncFactory.h"
 #include "TrackingTools/GeomPropagators/interface/StraightLinePlaneCrossing.h"
 #include "UserCode/DTDPGAnalysis/interface/TTreeGenerator.h"
-
 #include "DataFormats/RPCDigi/interface/RPCDigi.h"
 #include <DataFormats/MuonData/interface/MuonDigiCollection.h>
 
@@ -203,6 +202,7 @@ TTreeGenerator::TTreeGenerator(const edm::ParameterSet& pset):
   dtltTwinMuxInSize_ = pset.getParameter<int>("dtTrigTwinMuxInSize");
   dtltTwinMuxThSize_ = pset.getParameter<int>("dtTrigTwinMuxThSize");
   gmtSize_         = pset.getParameter<int>("gmtSize");
+  hltSize_         = pset.getParameter<int>("hltSize");
   STAMuSize_       = pset.getParameter<int>("STAMuSize");
   rpcRecHitSize_   = pset.getParameter<int>("rpcRecHitSize"); 
 
@@ -329,8 +329,8 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   if(runOnRaw_) hasPhiTwinMuxIn=event.getByToken(dtTrigTwinMuxInToken_,localTriggerTwinMuxIn);
 
   edm::Handle<L1MuDTChambThContainer> localTriggerTwinMux_Th;
-  bool hasThetaTwinMux=false;
-  if(runOnRaw_) hasThetaTwinMux=event.getByToken(dtTrigTwinMux_ThToken_,localTriggerTwinMux_Th);
+  // bool hasThetaTwinMux=false;
+  // if(runOnRaw_) hasThetaTwinMux=event.getByToken(dtTrigTwinMux_ThToken_,localTriggerTwinMux_Th);
 
   edm::Handle<reco::MuonCollection> MuList;
   if(!localDTmuons_) event.getByToken(staMuToken_,MuList);
@@ -341,9 +341,9 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   edm::Handle< L1GlobalTriggerReadoutRecord > gtrc; // legacy
   if(runOnRaw_ && !localDTmuons_) event.getByToken(gtToken_, gtrc); // legacy
 
-  edm::ESHandle<L1GtTriggerMenu> menuRcd;
-  context.get<L1GtTriggerMenuRcd>().get(menuRcd) ;
-  const L1GtTriggerMenu* menu = menuRcd.product();
+  // edm::ESHandle<L1GtTriggerMenu> menuRcd;
+  // context.get<L1GtTriggerMenuRcd>().get(menuRcd) ;
+  // const L1GtTriggerMenu* menu = menuRcd.product();
 
   edm::Handle<edm::TriggerResults>  hltresults;
   if(!localDTmuons_) event.getByToken(triggerResultToken_, hltresults); 
@@ -418,41 +418,41 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   }
 
   //DIGIS
-  if(runOnRaw_ && !runOnSimulation_) fill_digi_variables(dtdigis);
-  else   // Added to cope with simulation including Digis
-    if(runOnSimulation_ && runOnSimulationWithDigis_) fill_digi_variablesSim(dtdigisSim);
+  // if(runOnRaw_ && !runOnSimulation_) fill_digi_variables(dtdigis);
+  // else   // Added to cope with simulation including Digis
+  //  if(runOnSimulation_ && runOnSimulationWithDigis_) fill_digi_variablesSim(dtdigisSim);
 
 
   //DT SEGMENTS
-//   fill_dtsegments_variables(dtsegments4D, dtGeom_);
+  // fill_dtsegments_variables(dtsegments4D, dtGeom_);
   fill_dtsegments_variables(dtsegments4D, dtGeom_, rpcGeom_, context);
 
   //CSC SEGMENTS
-  if(!localDTmuons_) fill_cscsegments_variables(cscsegments);
+  // if(!localDTmuons_) fill_cscsegments_variables(cscsegments);
 
   //TwinMux
   if(runOnRaw_ && hasPhiTwinMuxIn) fill_twinmuxin_variables(localTriggerTwinMuxIn);
   if(runOnRaw_ && hasPhiTwinMuxOut) fill_twinmuxout_variables(localTriggerTwinMuxOut);
-  if(runOnRaw_ && hasThetaTwinMux) fill_twinmuxth_variables(localTriggerTwinMux_Th);
+  // if(runOnRaw_ && hasThetaTwinMux) fill_twinmuxth_variables(localTriggerTwinMux_Th);
 
   //MUONS
   if(!localDTmuons_) fill_muons_variables(MuList);
 
   //GMT
-  if(!localDTmuons_) fill_gmt_variables(gmt); // legacy
+  // if(!localDTmuons_) fill_gmt_variables(gmt); // legacy
 
   //GT
-  if(runOnRaw_ && !localDTmuons_) fill_gt_variables(gtrc,menu); // legacy
+  // if(runOnRaw_ && !localDTmuons_) fill_gt_variables(gtrc,menu); // legacy
     
   //HLT
   if(!localDTmuons_) fill_hlt_variables(event,hltresults,hltevent);
 
   // RPC
-  if(!localDTmuons_) fill_rpc_variables(event,rpcHits);
+  // if(!localDTmuons_) fill_rpc_variables(event,rpcHits);
   
-  analyzeBMTF(event);
+  // analyzeBMTF(event);
   
-  analyzeRPCunpacking(event);
+  // analyzeRPCunpacking(event);
   
   analyzeUnpackingRpcRecHit(event, rpcGeom_);  
   
@@ -461,50 +461,52 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   return;
 }
 
-void TTreeGenerator::fill_digi_variables(edm::Handle<DTDigiCollection> dtdigis)
-{
+// void TTreeGenerator::fill_digi_variables(edm::Handle<DTDigiCollection> dtdigis)
+// {
 
-  idigis = 0;
-  for (DTDigiCollection::DigiRangeIterator dtLayerIdIt = dtdigis->begin(); dtLayerIdIt!=dtdigis->end(); dtLayerIdIt++){
-    for (DTDigiCollection::const_iterator digiIt = ((*dtLayerIdIt).second).first;digiIt!=((*dtLayerIdIt).second).second; ++digiIt){
-      if(idigis >= digisSize_) return;
-      digi_wheel.push_back((*dtLayerIdIt).first.wheel());
-      digi_sector.push_back((*dtLayerIdIt).first.sector());
-      digi_station.push_back((*dtLayerIdIt).first.station());
-      digi_sl.push_back((*dtLayerIdIt).first.superLayer());
-      digi_layer.push_back((*dtLayerIdIt).first.layer());
-      digi_wire.push_back((*digiIt).wire());
-      digi_time.push_back((*digiIt).time());
-      idigis++;
-    }
-  }
-  return;
-}
+//   idigis = 0;
+//   for (DTDigiCollection::DigiRangeIterator dtLayerIdIt = dtdigis->begin(); dtLayerIdIt!=dtdigis->end(); dtLayerIdIt++){
+//     for (DTDigiCollection::const_iterator digiIt = ((*dtLayerIdIt).second).first;digiIt!=((*dtLayerIdIt).second).second; ++digiIt){
+//       if(idigis >= digisSize_) return;
+//       digi_wheel.push_back((*dtLayerIdIt).first.wheel());
+//       digi_sector.push_back((*dtLayerIdIt).first.sector());
+//       digi_station.push_back((*dtLayerIdIt).first.station());
+//       digi_sl.push_back((*dtLayerIdIt).first.superLayer());
+//       digi_layer.push_back((*dtLayerIdIt).first.layer());
+//       digi_wire.push_back((*digiIt).wire());
+//       digi_time.push_back((*digiIt).time());
+//       idigis++;
+//     }
+//   }
+//   return;
+// }
 
 
-void TTreeGenerator::fill_digi_variablesSim(edm::Handle<DTDigiSimLinkCollection> dtdigisSim)
-{
+// void TTreeGenerator::fill_digi_variablesSim(edm::Handle<DTDigiSimLinkCollection> dtdigisSim)
+// {
 
-  idigis = 0;
-  for (DTDigiSimLinkCollection::DigiRangeIterator dtLayerIdIt = dtdigisSim->begin(); dtLayerIdIt!=dtdigisSim->end(); dtLayerIdIt++){
-    for (DTDigiSimLinkCollection::const_iterator digiIt = ((*dtLayerIdIt).second).first;digiIt!=((*dtLayerIdIt).second).second; ++digiIt){
-      if(idigis >= digisSize_) return;
-      digi_wheel.push_back((*dtLayerIdIt).first.wheel());
-      digi_sector.push_back((*dtLayerIdIt).first.sector());
-      digi_station.push_back((*dtLayerIdIt).first.station());
-      digi_sl.push_back((*dtLayerIdIt).first.superLayer());
-      digi_layer.push_back((*dtLayerIdIt).first.layer());
-      digi_wire.push_back((*digiIt).wire());
-      digi_time.push_back((*digiIt).time());
-      idigis++;
-    }
-  }
-  return;
-}
+//   idigis = 0;
+//   for (DTDigiSimLinkCollection::DigiRangeIterator dtLayerIdIt = dtdigisSim->begin(); dtLayerIdIt!=dtdigisSim->end(); dtLayerIdIt++){
+//     for (DTDigiSimLinkCollection::const_iterator digiIt = ((*dtLayerIdIt).second).first;digiIt!=((*dtLayerIdIt).second).second; ++digiIt){
+//       if(idigis >= digisSize_) return;
+//       digi_wheel.push_back((*dtLayerIdIt).first.wheel());
+//       digi_sector.push_back((*dtLayerIdIt).first.sector());
+//       digi_station.push_back((*dtLayerIdIt).first.station());
+//       digi_sl.push_back((*dtLayerIdIt).first.superLayer());
+//       digi_layer.push_back((*dtLayerIdIt).first.layer());
+//       digi_wire.push_back((*digiIt).wire());
+//       digi_time.push_back((*digiIt).time());
+//       idigis++;
+//     }
+//   }
+//   return;
+// }
 
 
 // void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, const DTGeometry* dtGeom_)
-void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, const DTGeometry* dtGeom_, const RPCGeometry* rpcGeom_, const edm::EventSetup& iSetup)
+void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, 
+					       const DTGeometry* dtGeom_, const RPCGeometry* rpcGeom_, 
+					       const edm::EventSetup& iSetup)
 {
 
   idtsegments = 0;
@@ -846,28 +848,28 @@ void TTreeGenerator::fill_dtz_info(const DTSLRecSegment2D* zSeg,  const GeomDet*
   return;
 }
 
-void TTreeGenerator::fill_cscsegments_variables(edm::Handle<CSCSegmentCollection> cscsegments)
-{
-  icscsegments = 0;
-  for (CSCSegmentCollection::id_iterator chambIt = cscsegments->id_begin(); chambIt != cscsegments->id_end(); ++chambIt){
-    CSCSegmentCollection::range  range = cscsegments->get(*chambIt);
-    for (CSCSegmentCollection::const_iterator cscsegment = range.first; cscsegment!=range.second; ++cscsegment){
-      if(icscsegments >= cscsegmentsSize_) return;
-      cscsegm_ring.push_back((*chambIt).ring());
-      cscsegm_chamber.push_back((*chambIt).chamber());
-      cscsegm_station.push_back((*chambIt).station());
-      const GeomDet* geomDet = theTrackingGeometry->idToDet(cscsegment->geographicalId());
-      const GlobalVector point_glb = geomDet->toGlobal(cscsegment->localDirection());
-      cscsegm_cosx.push_back(point_glb.x());
-      cscsegm_cosy.push_back(point_glb.y());
-      cscsegm_cosz.push_back(point_glb.y());
-      cscsegm_normchi2.push_back(cscsegment->chi2()/cscsegment->degreesOfFreedom());
-      cscsegm_nRecHits.push_back(cscsegment->nRecHits());
-      icscsegments++;
-    }
-  }
-  return;
-}
+// void TTreeGenerator::fill_cscsegments_variables(edm::Handle<CSCSegmentCollection> cscsegments)
+// {
+//   icscsegments = 0;
+//   for (CSCSegmentCollection::id_iterator chambIt = cscsegments->id_begin(); chambIt != cscsegments->id_end(); ++chambIt){
+//     CSCSegmentCollection::range  range = cscsegments->get(*chambIt);
+//     for (CSCSegmentCollection::const_iterator cscsegment = range.first; cscsegment!=range.second; ++cscsegment){
+//       if(icscsegments >= cscsegmentsSize_) return;
+//       cscsegm_ring.push_back((*chambIt).ring());
+//       cscsegm_chamber.push_back((*chambIt).chamber());
+//       cscsegm_station.push_back((*chambIt).station());
+//       const GeomDet* geomDet = theTrackingGeometry->idToDet(cscsegment->geographicalId());
+//       const GlobalVector point_glb = geomDet->toGlobal(cscsegment->localDirection());
+//       cscsegm_cosx.push_back(point_glb.x());
+//       cscsegm_cosy.push_back(point_glb.y());
+//       cscsegm_cosz.push_back(point_glb.y());
+//       cscsegm_normchi2.push_back(cscsegment->chi2()/cscsegment->degreesOfFreedom());
+//       cscsegm_nRecHits.push_back(cscsegment->nRecHits());
+//       icscsegments++;
+//     }
+//   }
+//   return;
+// }
 
 void TTreeGenerator::fill_twinmuxout_variables(edm::Handle<L1MuDTChambPhContainer> localTriggerTwinMuxOut)
 {
@@ -914,25 +916,25 @@ void TTreeGenerator::fill_twinmuxin_variables(edm::Handle<L1MuDTChambPhContainer
   return;
 }
 
-void TTreeGenerator::fill_twinmuxth_variables(edm::Handle<L1MuDTChambThContainer> localTriggerTwinMux_Th)
-{
-  idtltTwinMux_th = 0;
-  const std::vector<L1MuDTChambThDigi>*  thTrigs = localTriggerTwinMux_Th->getContainer();
-  for(std::vector<L1MuDTChambThDigi>::const_iterator ith = thTrigs->begin(); ith != thTrigs->end() ; ++ith){
-    if(idtltTwinMux_th >= dtltTwinMuxThSize_) break;
-    ltTwinMux_thWheel.push_back(ith->whNum());
-    ltTwinMux_thSector.push_back(ith->scNum() + 1); // DTTF[0-11] -> DT[1-12] Sector Numbering
-    ltTwinMux_thStation.push_back(ith->stNum());
-    ltTwinMux_thBx.push_back(ith->bxNum());
-    unsigned short int thcode=0;
-    for (int pos=0; pos<7; pos++)
-      if (ith->code(pos))
-      thcode=thcode | (0x1<<pos);
-    ltTwinMux_thHits.push_back(thcode);
-    idtltTwinMux_th++;
-  }
-  return;
-}
+// void TTreeGenerator::fill_twinmuxth_variables(edm::Handle<L1MuDTChambThContainer> localTriggerTwinMux_Th)
+// {
+//   idtltTwinMux_th = 0;
+//   const std::vector<L1MuDTChambThDigi>*  thTrigs = localTriggerTwinMux_Th->getContainer();
+//   for(std::vector<L1MuDTChambThDigi>::const_iterator ith = thTrigs->begin(); ith != thTrigs->end() ; ++ith){
+//     if(idtltTwinMux_th >= dtltTwinMuxThSize_) break;
+//     ltTwinMux_thWheel.push_back(ith->whNum());
+//     ltTwinMux_thSector.push_back(ith->scNum() + 1); // DTTF[0-11] -> DT[1-12] Sector Numbering
+//     ltTwinMux_thStation.push_back(ith->stNum());
+//     ltTwinMux_thBx.push_back(ith->bxNum());
+//     unsigned short int thcode=0;
+//     for (int pos=0; pos<7; pos++)
+//       if (ith->code(pos))
+//       thcode=thcode | (0x1<<pos);
+//     ltTwinMux_thHits.push_back(thcode);
+//     idtltTwinMux_th++;
+//   }
+//   return;
+// }
 
 void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuList)
 {
@@ -1075,16 +1077,16 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
     TRKMu_sector_MB3.push_back(sector[2]);
     TRKMu_wheel_MB3.push_back(wheel[2]);
 
-    TRKMu_x_MB4.push_back(x[2]);
-    TRKMu_y_MB4.push_back(y[2]);
-    TRKMu_sector_MB4.push_back(sector[2]);
-    TRKMu_wheel_MB4.push_back(wheel[2]);
+    TRKMu_x_MB4.push_back(x[3]);
+    TRKMu_y_MB4.push_back(y[3]);
+    TRKMu_sector_MB4.push_back(sector[3]);
+    TRKMu_wheel_MB4.push_back(wheel[3]);
 
-    std::cout << "[TTreeGenerator::analyze] nMatches : " << iMatches << "\t";
-    for (auto & ch : stations) std::cout << ch << " "; std::cout << "\t";
-    for (auto & sec : sectors) std::cout << sec << " "; std::cout << "\t";
-    for (auto & wh : wheels) std::cout << wh << " "; std::cout << "\t";
-    std::cout << std::endl;
+    // std::cout << "[TTreeGenerator::analyze] nMatches : " << iMatches << "\t";
+    // for (auto & ch : stations) std::cout << ch << " "; std::cout << "\t";
+    // for (auto & sec : sectors) std::cout << sec << " "; std::cout << "\t";
+    // for (auto & wh : wheels) std::cout << wh << " "; std::cout << "\t";
+    // std::cout << std::endl;
 
     if(nmuon->isCaloCompatibilityValid()) STAMu_caloCompatibility.push_back(nmuon->caloCompatibility());
     else STAMu_caloCompatibility.push_back(-999.);
@@ -1116,72 +1118,71 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
   return;
 }
 
-void TTreeGenerator::fill_gmt_variables(const edm::Handle<l1t::MuonBxCollection> & gmt)
-{
-  igmt = 0;
+// void TTreeGenerator::fill_gmt_variables(const edm::Handle<l1t::MuonBxCollection> & gmt)
+// {
+//   igmt = 0;
 
-  for (int ibx = gmt->getFirstBX(); ibx <= gmt->getLastBX(); ++ibx) 
-    {
-      for (auto l1MuIt = gmt->begin(ibx); l1MuIt != gmt->end(ibx); ++l1MuIt)
-	{
+//   for (int ibx = gmt->getFirstBX(); ibx <= gmt->getLastBX(); ++ibx) 
+//     {
+//       for (auto l1MuIt = gmt->begin(ibx); l1MuIt != gmt->end(ibx); ++l1MuIt)
+// 	{
 
-	  gmt_bx.push_back(ibx);
-	  gmt_phi.push_back(l1MuIt->phi());
-	  gmt_eta.push_back(l1MuIt->eta());
-	  gmt_pt.push_back(l1MuIt->pt());
-	  gmt_qual.push_back(l1MuIt->hwQual());
-	  gmt_tf_idx.push_back(l1MuIt->tfMuonIndex());
-	  gmt_charge.push_back(l1MuIt->hwChargeValid() ? l1MuIt->charge() : 0);
-	  igmt++;
-	}
-    }
+// 	  gmt_bx.push_back(ibx);
+// 	  gmt_phi.push_back(l1MuIt->phi());
+// 	  gmt_eta.push_back(l1MuIt->eta());
+// 	  gmt_pt.push_back(l1MuIt->pt());
+// 	  gmt_qual.push_back(l1MuIt->hwQual());
+// 	  gmt_tf_idx.push_back(l1MuIt->tfMuonIndex());
+// 	  gmt_charge.push_back(l1MuIt->hwChargeValid() ? l1MuIt->charge() : 0);
+// 	  igmt++;
+// 	}
+//     }
   
-  return;
-}
+//   return;
+// }
 
-void TTreeGenerator::fill_gt_variables(edm::Handle<L1GlobalTriggerReadoutRecord> gtrr, const L1GtTriggerMenu* menu) // CB FIXME speedup // legacy
-{
-  igtalgo = 0;
-  igttt   = 0;
-  const AlgorithmMap algoMap = menu->gtAlgorithmMap();
-  const AlgorithmMap ttMap   = menu->gtTechnicalTriggerMap();
-  for(int ibx=0; ibx<5; ibx++) {
-    DecisionWord gtDecisionWord = gtrr->decisionWord(ibx-2);
-    if (!gtDecisionWord.empty()) {
-      CItAlgo algoMapIt  = algoMap.begin();
-      CItAlgo algoMapEnd = algoMap.end();
-      for(; algoMapIt!=algoMapEnd; ++algoMapIt) {
-	if( menu->gtAlgorithmResult((*algoMapIt).first, gtDecisionWord) ) {
-	  // gt_algo_bit.push_back(TString((*algoMapIt).first));
-	  gt_algo_bit.push_back((algoMapIt->second).algoBitNumber());
-	  gt_algo_bx.push_back(ibx-2);
-	  igtalgo++;
-	}
-      }
-    }
-    TechnicalTriggerWord gtTTWord = gtrr->technicalTriggerWord(ibx-2);
-    if (!gtTTWord.empty()) {
-      CItAlgo ttMapIt  = ttMap.begin();
-      CItAlgo ttMapEnd = ttMap.end();
-      for(; ttMapIt!=ttMapEnd; ++ttMapIt) {
-	int bitNumber = (ttMapIt->second).algoBitNumber();
-	if (gtTTWord.at(bitNumber)) {
-	  //	  gt_tt_bit.push_back(TString(ttMapIt->first));
-	  gt_tt_bit.push_back((ttMapIt->second).algoBitNumber());
-	  gt_tt_bx.push_back(ibx-2);
-	  igttt++;
-	}
-      }
-    }
-  }
-  return;
-}
+// void TTreeGenerator::fill_gt_variables(edm::Handle<L1GlobalTriggerReadoutRecord> gtrr, const L1GtTriggerMenu* menu) // CB FIXME speedup // legacy
+// {
+//   igtalgo = 0;
+//   igttt   = 0;
+//   const AlgorithmMap algoMap = menu->gtAlgorithmMap();
+//   const AlgorithmMap ttMap   = menu->gtTechnicalTriggerMap();
+//   for(int ibx=0; ibx<5; ibx++) {
+//     DecisionWord gtDecisionWord = gtrr->decisionWord(ibx-2);
+//     if (!gtDecisionWord.empty()) {
+//       CItAlgo algoMapIt  = algoMap.begin();
+//       CItAlgo algoMapEnd = algoMap.end();
+//       for(; algoMapIt!=algoMapEnd; ++algoMapIt) {
+// 	if( menu->gtAlgorithmResult((*algoMapIt).first, gtDecisionWord) ) {
+// 	  // gt_algo_bit.push_back(TString((*algoMapIt).first));
+// 	  gt_algo_bit.push_back((algoMapIt->second).algoBitNumber());
+// 	  gt_algo_bx.push_back(ibx-2);
+// 	  igtalgo++;
+// 	}
+//       }
+//     }
+//     TechnicalTriggerWord gtTTWord = gtrr->technicalTriggerWord(ibx-2);
+//     if (!gtTTWord.empty()) {
+//       CItAlgo ttMapIt  = ttMap.begin();
+//       CItAlgo ttMapEnd = ttMap.end();
+//       for(; ttMapIt!=ttMapEnd; ++ttMapIt) {
+// 	int bitNumber = (ttMapIt->second).algoBitNumber();
+// 	if (gtTTWord.at(bitNumber)) {
+// 	  //	  gt_tt_bit.push_back(TString(ttMapIt->first));
+// 	  gt_tt_bit.push_back((ttMapIt->second).algoBitNumber());
+// 	  gt_tt_bx.push_back(ibx-2);
+// 	  igttt++;
+// 	}
+//       }
+//     }
+//   }
+//   return;
+// }
 
 void TTreeGenerator::fill_hlt_variables(const edm::Event &e, 
 					edm::Handle<edm::TriggerResults> hltresults,
 					edm::Handle<trigger::TriggerEvent> hltevent)
 {
-  ihlt = 0; 
   const edm::TriggerNames TrigNames_ = e.triggerNames(*hltresults);
   const int ntrigs = hltresults->size();
 
@@ -1189,20 +1190,25 @@ void TTreeGenerator::fill_hlt_variables(const edm::Event &e,
     TString trigName=TrigNames_.triggerName(itr);
     if (hltresults->accept(itr)) {
       hlt_path.push_back(trigName);
-      ihlt++;
     }
   }
 
   const trigger::size_type nFilters(hltevent->sizeFilters());
 
+  ihlt = 0; 
+
   for (trigger::size_type iFilter=0; iFilter!=nFilters; ++iFilter)
     {
 
+      if(ihlt >= hltSize_) break;
+
       std::string filterTag = hltevent->filterTag(iFilter).encode();
 
-      if (filterTag.find("Mu")       != std::string::npos &&
-	  filterTag.find("Filtered") != std::string::npos &&
-	  filterTag.find("L3")       != std::string::npos)
+      if ( ( filterTag.find("Mu22") != std::string::npos ||
+	     filterTag.find("Mu25") != std::string::npos ) &&
+	   filterTag.find("Filtered") != std::string::npos &&
+	   filterTag.find("L3")       != std::string::npos
+	 )
 	{
 
 	  trigger::Keys objectKeys = hltevent->filterKeys(iFilter);
@@ -1212,6 +1218,8 @@ void TTreeGenerator::fill_hlt_variables(const edm::Event &e,
 	    {
 	      trigger::size_type objKey = objectKeys.at(iKey);
 	      const trigger::TriggerObject& triggerObj(triggerObjects[objKey]);
+
+	      ihlt++;
 
 	      float trigObjPt = triggerObj.pt();
 	      float trigObjEta = triggerObj.eta();
@@ -1229,35 +1237,35 @@ void TTreeGenerator::fill_hlt_variables(const edm::Event &e,
 
 }
 
-void TTreeGenerator::fill_rpc_variables(const edm::Event &e, edm::Handle<RPCRecHitCollection> rpcrechits){
-  RPCRecHitCollection::const_iterator recHit;
-  irpcrechits=0;
-  for(recHit = rpcrechits->begin(); recHit != rpcrechits->end(); recHit++){ 
-    int cls = recHit->clusterSize();
-    int firststrip = recHit->firstClusterStrip();
-    int bx = recHit->BunchX();
-    RPCDetId rpcId = recHit->rpcId();
-    int region = rpcId.region();
-    int stat = rpcId.station();
-    int sect = rpcId.sector();
-    int layer = rpcId.layer();
-    int subsector = rpcId.subsector();
-    int roll = rpcId.roll();
-    int ring = rpcId.ring();
-    rpc_region.push_back(region);
-    rpc_clusterSize.push_back(cls);
-    rpc_strip.push_back(firststrip);
-    rpc_bx.push_back(bx);
-    rpc_station.push_back(stat);
-    rpc_sector.push_back(sect);
-    rpc_layer.push_back(layer);
-    rpc_subsector.push_back(subsector);
-    rpc_roll.push_back(roll);
-    rpc_ring.push_back(ring);
-    irpcrechits++;
-  }
-  return;
-}
+// void TTreeGenerator::fill_rpc_variables(const edm::Event &e, edm::Handle<RPCRecHitCollection> rpcrechits){
+//   RPCRecHitCollection::const_iterator recHit;
+//   irpcrechits=0;
+//   for(recHit = rpcrechits->begin(); recHit != rpcrechits->end(); recHit++){ 
+//     int cls = recHit->clusterSize();
+//     int firststrip = recHit->firstClusterStrip();
+//     int bx = recHit->BunchX();
+//     RPCDetId rpcId = recHit->rpcId();
+//     int region = rpcId.region();
+//     int stat = rpcId.station();
+//     int sect = rpcId.sector();
+//     int layer = rpcId.layer();
+//     int subsector = rpcId.subsector();
+//     int roll = rpcId.roll();
+//     int ring = rpcId.ring();
+//     rpc_region.push_back(region);
+//     rpc_clusterSize.push_back(cls);
+//     rpc_strip.push_back(firststrip);
+//     rpc_bx.push_back(bx);
+//     rpc_station.push_back(stat);
+//     rpc_sector.push_back(sect);
+//     rpc_layer.push_back(layer);
+//     rpc_subsector.push_back(subsector);
+//     rpc_roll.push_back(roll);
+//     rpc_ring.push_back(ring);
+//     irpcrechits++;
+//   }
+//   return;
+// }
 
 void TTreeGenerator::analyzeUnpackingRpcRecHit(const edm::Event& event, const RPCGeometry* rpcGeom_)
 {
@@ -1323,144 +1331,144 @@ void TTreeGenerator::analyzeUnpackingRpcRecHit(const edm::Event& event, const RP
   return;
 }
 
-void TTreeGenerator::analyzeRPCunpacking(const edm::Event& event)
-{
-	edm::Handle<MuonDigiCollection<RPCDetId,RPCDigi> > rpc;
-	event.getByToken(rpcToken_, rpc);
-	auto chamber = rpc->begin();
-	auto chend  = rpc->end();
-	irpcdigi_TwinMux=0;
-	for( ; chamber != chend; ++chamber ) {
+// void TTreeGenerator::analyzeRPCunpacking(const edm::Event& event)
+// {
+// 	edm::Handle<MuonDigiCollection<RPCDetId,RPCDigi> > rpc;
+// 	event.getByToken(rpcToken_, rpc);
+// 	auto chamber = rpc->begin();
+// 	auto chend  = rpc->end();
+// 	irpcdigi_TwinMux=0;
+// 	for( ; chamber != chend; ++chamber ) {
 	
-		if(OnlyBarrel_ && (*chamber).first.region() != 0) continue;
+// 		if(OnlyBarrel_ && (*chamber).first.region() != 0) continue;
 
-   		auto digi = (*chamber).second.first;
-	    auto dend = (*chamber).second.second;
-		for( ; digi != dend; ++digi ) {
-			RpcDigi_TwinMux_bx.push_back(digi->bx());
-			RpcDigi_TwinMux_strip.push_back(digi->strip());
-		}
-		RpcDigi_TwinMux_region.push_back((*chamber).first.region()); 
-		RpcDigi_TwinMux_ring.push_back((*chamber).first.ring());
-		RpcDigi_TwinMux_station.push_back((*chamber).first.station());
-		RpcDigi_TwinMux_layer.push_back((*chamber).first.layer());
-		RpcDigi_TwinMux_sector.push_back((*chamber).first.sector());
-		RpcDigi_TwinMux_subsector.push_back((*chamber).first.subsector()); 
-		RpcDigi_TwinMux_roll.push_back((*chamber).first.roll());
-		RpcDigi_TwinMux_trIndex.push_back((*chamber).first.trIndex());
-		RpcDigi_TwinMux_det.push_back((*chamber).first.det());
-		RpcDigi_TwinMux_subdetId.push_back((*chamber).first.subdetId()); 
-		RpcDigi_TwinMux_rawId.push_back((*chamber).first.rawId()); 
-		irpcdigi_TwinMux++;
-	}  
+//    		auto digi = (*chamber).second.first;
+// 	    auto dend = (*chamber).second.second;
+// 		for( ; digi != dend; ++digi ) {
+// 			RpcDigi_TwinMux_bx.push_back(digi->bx());
+// 			RpcDigi_TwinMux_strip.push_back(digi->strip());
+// 		}
+// 		RpcDigi_TwinMux_region.push_back((*chamber).first.region()); 
+// 		RpcDigi_TwinMux_ring.push_back((*chamber).first.ring());
+// 		RpcDigi_TwinMux_station.push_back((*chamber).first.station());
+// 		RpcDigi_TwinMux_layer.push_back((*chamber).first.layer());
+// 		RpcDigi_TwinMux_sector.push_back((*chamber).first.sector());
+// 		RpcDigi_TwinMux_subsector.push_back((*chamber).first.subsector()); 
+// 		RpcDigi_TwinMux_roll.push_back((*chamber).first.roll());
+// 		RpcDigi_TwinMux_trIndex.push_back((*chamber).first.trIndex());
+// 		RpcDigi_TwinMux_det.push_back((*chamber).first.det());
+// 		RpcDigi_TwinMux_subdetId.push_back((*chamber).first.subdetId()); 
+// 		RpcDigi_TwinMux_rawId.push_back((*chamber).first.rawId()); 
+// 		irpcdigi_TwinMux++;
+// 	}  
 
-}
+// }
 
-void TTreeGenerator::analyzeBMTF(const edm::Event& event)
-{
-///Output of BMTF
-  int ctr = 0;
-  edm::Handle<l1t::RegionalMuonCandBxCollection> mycoll;
-  event.getByToken(bmtfOutputTag_,mycoll);
+// void TTreeGenerator::analyzeBMTF(const edm::Event& event)
+// {
+// ///Output of BMTF
+//   int ctr = 0;
+//   edm::Handle<l1t::RegionalMuonCandBxCollection> mycoll;
+//   event.getByToken(bmtfOutputTag_,mycoll);
 
-  if (mycoll.isValid()) {
-        int firstbx = (*mycoll).getFirstBX();
-        int lastbx  = (*mycoll).getLastBX() + 1;
-        for(int i=firstbx; i<lastbx; i++){
-  				for (auto mu = (*mycoll).begin(i); mu != (*mycoll).end(i); ++mu) {
-		    	  ctr++;
-			      Bmtf_Pt.push_back(mu->hwPt()*0.5);
-			      Bmtf_Eta.push_back(mu->hwEta()*0.010875);
-			      Bmtf_FineBit.push_back(mu->hwHF());
-			      Bmtf_Phi.push_back(mu->hwPhi());
-			      //2*mu->hwPhi()*TMath::Pi()/576;
-			      int phi = 0;
-			      phi = mu->processor()*48 + mu->hwPhi();
-			      phi += 576 - 24;
-			      phi = phi % 576;
-			      Bmtf_GlobalPhi.push_back(phi);
-		    	  Bmtf_qual.push_back(mu->hwQual());
-	    		  Bmtf_ch.push_back(mu->hwSign());
-    			  Bmtf_bx.push_back(i);
-			      Bmtf_processor.push_back(mu->processor());
-			      std::map<int, int>  trAdd;
-	    		  trAdd = mu->trackAddress();
-		    	  int wheel = pow(-1,trAdd[0]) * trAdd[1];
-    			  Bmtf_wh.push_back(wheel);
-			      Bmtf_trAddress.push_back(trAdd[2]);
-    			  Bmtf_trAddress.push_back(trAdd[3]);
-	    		  Bmtf_trAddress.push_back(trAdd[4]);
-			      Bmtf_trAddress.push_back(trAdd[5]);
-    			} // for mu
-		        Bmtf_Size = ctr;
- 	 } // for i
-  } //if
-  else 
-      edm::LogInfo("L1Prompt") << "can't find L1MuMBTrackContainer";
+//   if (mycoll.isValid()) {
+//         int firstbx = (*mycoll).getFirstBX();
+//         int lastbx  = (*mycoll).getLastBX() + 1;
+//         for(int i=firstbx; i<lastbx; i++){
+//   				for (auto mu = (*mycoll).begin(i); mu != (*mycoll).end(i); ++mu) {
+// 		    	  ctr++;
+// 			      Bmtf_Pt.push_back(mu->hwPt()*0.5);
+// 			      Bmtf_Eta.push_back(mu->hwEta()*0.010875);
+// 			      Bmtf_FineBit.push_back(mu->hwHF());
+// 			      Bmtf_Phi.push_back(mu->hwPhi());
+// 			      //2*mu->hwPhi()*TMath::Pi()/576;
+// 			      int phi = 0;
+// 			      phi = mu->processor()*48 + mu->hwPhi();
+// 			      phi += 576 - 24;
+// 			      phi = phi % 576;
+// 			      Bmtf_GlobalPhi.push_back(phi);
+// 		    	  Bmtf_qual.push_back(mu->hwQual());
+// 	    		  Bmtf_ch.push_back(mu->hwSign());
+//     			  Bmtf_bx.push_back(i);
+// 			      Bmtf_processor.push_back(mu->processor());
+// 			      std::map<int, int>  trAdd;
+// 	    		  trAdd = mu->trackAddress();
+// 		    	  int wheel = pow(-1,trAdd[0]) * trAdd[1];
+//     			  Bmtf_wh.push_back(wheel);
+// 			      Bmtf_trAddress.push_back(trAdd[2]);
+//     			  Bmtf_trAddress.push_back(trAdd[3]);
+// 	    		  Bmtf_trAddress.push_back(trAdd[4]);
+// 			      Bmtf_trAddress.push_back(trAdd[5]);
+//     			} // for mu
+// 		        Bmtf_Size = ctr;
+//  	 } // for i
+//   } //if
+//   else 
+//       edm::LogInfo("L1Prompt") << "can't find L1MuMBTrackContainer";
       
 
-  edm::Handle<L1MuDTChambPhContainer> bmtfPhInputs;  
-  event.getByToken(bmtfPhInputTag_, bmtfPhInputs);
+//   edm::Handle<L1MuDTChambPhContainer> bmtfPhInputs;  
+//   event.getByToken(bmtfPhInputTag_, bmtfPhInputs);
   
-  if(!(bmtfPhInputs.isValid())) std::cout<<"no  ok"<<std::endl;
+//   if(!(bmtfPhInputs.isValid())) std::cout<<"no  ok"<<std::endl;
   
-   L1MuDTChambPhContainer::Phi_Container const *PhContainer = bmtfPhInputs->getContainer();
+//    L1MuDTChambPhContainer::Phi_Container const *PhContainer = bmtfPhInputs->getContainer();
 
-   Bmtf_phSize = PhContainer->size();
-   int iphtr=0;
-   for( L1MuDTChambPhContainer::Phi_Container::const_iterator DTPhDigiItr =  PhContainer->begin() ;
-       DTPhDigiItr != PhContainer->end(); ++DTPhDigiItr ){
-		      Bmtf_phBx.push_back     (  DTPhDigiItr->bxNum() );
-    		  Bmtf_phTs2Tag.push_back     ( DTPhDigiItr->Ts2Tag() );
-		      Bmtf_phWh.push_back     (  DTPhDigiItr->whNum() );
-	    	  Bmtf_phSe.push_back     (  DTPhDigiItr->scNum() );
-	    	  Bmtf_phSt.push_back     (  DTPhDigiItr->stNum() );
-    		  Bmtf_phAng.push_back    (  DTPhDigiItr->phi()   );
-		      Bmtf_phBandAng.push_back(  DTPhDigiItr->phiB()  );
-    		  Bmtf_phCode.push_back   (  DTPhDigiItr->code()  );
-		      iphtr++;
-    }
+//    Bmtf_phSize = PhContainer->size();
+//    int iphtr=0;
+//    for( L1MuDTChambPhContainer::Phi_Container::const_iterator DTPhDigiItr =  PhContainer->begin() ;
+//        DTPhDigiItr != PhContainer->end(); ++DTPhDigiItr ){
+// 		      Bmtf_phBx.push_back     (  DTPhDigiItr->bxNum() );
+//     		  Bmtf_phTs2Tag.push_back     ( DTPhDigiItr->Ts2Tag() );
+// 		      Bmtf_phWh.push_back     (  DTPhDigiItr->whNum() );
+// 	    	  Bmtf_phSe.push_back     (  DTPhDigiItr->scNum() );
+// 	    	  Bmtf_phSt.push_back     (  DTPhDigiItr->stNum() );
+//     		  Bmtf_phAng.push_back    (  DTPhDigiItr->phi()   );
+// 		      Bmtf_phBandAng.push_back(  DTPhDigiItr->phiB()  );
+//     		  Bmtf_phCode.push_back   (  DTPhDigiItr->code()  );
+// 		      iphtr++;
+//     }
 
 
 
-  edm::Handle<L1MuDTChambThContainer > bmtfThInputs;
-  event.getByToken(bmtfThInputTag_, bmtfThInputs); 
+//   edm::Handle<L1MuDTChambThContainer > bmtfThInputs;
+//   event.getByToken(bmtfThInputTag_, bmtfThInputs); 
   
-   L1MuDTChambThContainer::The_Container const *ThContainer = bmtfThInputs->getContainer();
+//    L1MuDTChambThContainer::The_Container const *ThContainer = bmtfThInputs->getContainer();
    
-   if(!(bmtfThInputs.isValid())) std::cout<<"no  ok"<<std::endl;
+//    if(!(bmtfThInputs.isValid())) std::cout<<"no  ok"<<std::endl;
 
-   int ithtr=0;
-   Bmtf_thSize = ThContainer->size();
+//    int ithtr=0;
+//    Bmtf_thSize = ThContainer->size();
 
-   for( L1MuDTChambThContainer::The_Container::const_iterator
-	 DTThDigiItr =  ThContainer->begin() ;
-       DTThDigiItr != ThContainer->end() ;
-       ++DTThDigiItr )
-     {
+//    for( L1MuDTChambThContainer::The_Container::const_iterator
+// 	 DTThDigiItr =  ThContainer->begin() ;
+//        DTThDigiItr != ThContainer->end() ;
+//        ++DTThDigiItr )
+//      {
 
-      Bmtf_thBx.push_back( DTThDigiItr->bxNum()  );
-      Bmtf_thWh.push_back( DTThDigiItr->whNum() );
-      Bmtf_thSe.push_back( DTThDigiItr->scNum() );
-      Bmtf_thSt.push_back( DTThDigiItr->stNum() );
+//       Bmtf_thBx.push_back( DTThDigiItr->bxNum()  );
+//       Bmtf_thWh.push_back( DTThDigiItr->whNum() );
+//       Bmtf_thSe.push_back( DTThDigiItr->scNum() );
+//       Bmtf_thSt.push_back( DTThDigiItr->stNum() );
 
-      ostringstream  ss1, ss2; 
-      ss1.clear(); ss2.clear();
-      ss1<<"9"; ss2<<"9";
+//       ostringstream  ss1, ss2; 
+//       ss1.clear(); ss2.clear();
+//       ss1<<"9"; ss2<<"9";
 
-      for(int j=0; j<7; j++){
-        ss1<<DTThDigiItr->position(j);
-        ss2<<DTThDigiItr->code(j) ;
-      }
-      Bmtf_thTheta.push_back(stoi(ss1.str())) ;
-      Bmtf_thCode.push_back(stoi(ss2.str()));
+//       for(int j=0; j<7; j++){
+//         ss1<<DTThDigiItr->position(j);
+//         ss2<<DTThDigiItr->code(j) ;
+//       }
+//       Bmtf_thTheta.push_back(stoi(ss1.str())) ;
+//       Bmtf_thCode.push_back(stoi(ss2.str()));
 
-      ithtr++;
+//       ithtr++;
 
-    }     
+//     }     
 
   
-}
+// }
 
 void TTreeGenerator::beginJob()
 {
@@ -1506,13 +1514,13 @@ void TTreeGenerator::beginJob()
   tree_->Branch("hlt_filter_pt", &hlt_filter_pt);
 
   //digi variables
-  tree_->Branch("digi_wheel",&digi_wheel);
-  tree_->Branch("digi_sector",&digi_sector);
-  tree_->Branch("digi_station",&digi_station);
-  tree_->Branch("digi_sl",&digi_sl);
-  tree_->Branch("digi_layer",&digi_layer);
-  tree_->Branch("digi_wire",&digi_wire);
-  tree_->Branch("digi_time",&digi_time);
+  // tree_->Branch("digi_wheel",&digi_wheel);
+  // tree_->Branch("digi_sector",&digi_sector);
+  // tree_->Branch("digi_station",&digi_station);
+  // tree_->Branch("digi_sl",&digi_sl);
+  // tree_->Branch("digi_layer",&digi_layer);
+  // tree_->Branch("digi_wire",&digi_wire);
+  // tree_->Branch("digi_time",&digi_time);
 
   //DT segment variables
   tree_->Branch("dtsegm4D_wheel",&segm4D_wheel);
@@ -1564,16 +1572,16 @@ void TTreeGenerator::beginJob()
   tree_->Branch("dtsegm4D_z_hitsTimeCali",&segm4D_zHits_TimeCali,2048000,0);
 
   //CSC segment variables
-  tree_->Branch("cscsegm_ring",&cscsegm_ring);
-  tree_->Branch("cscsegm_chamber",&cscsegm_chamber);
-  tree_->Branch("cscsegm_station",&cscsegm_station);
-  tree_->Branch("cscsegm_cosx",&cscsegm_cosx);
-  tree_->Branch("cscsegm_cosy",&cscsegm_cosy);
-  tree_->Branch("cscsegm_cosz",&cscsegm_cosz);
-  tree_->Branch("cscsegm_phi",&cscsegm_phi);
-  tree_->Branch("cscsegm_eta",&cscsegm_eta);
-  tree_->Branch("cscsegm_normchisq",&cscsegm_normchi2);
-  tree_->Branch("cscsegm_nRecHits",&cscsegm_nRecHits);
+  // tree_->Branch("cscsegm_ring",&cscsegm_ring);
+  // tree_->Branch("cscsegm_chamber",&cscsegm_chamber);
+  // tree_->Branch("cscsegm_station",&cscsegm_station);
+  // tree_->Branch("cscsegm_cosx",&cscsegm_cosx);
+  // tree_->Branch("cscsegm_cosy",&cscsegm_cosy);
+  // tree_->Branch("cscsegm_cosz",&cscsegm_cosz);
+  // tree_->Branch("cscsegm_phi",&cscsegm_phi);
+  // tree_->Branch("cscsegm_eta",&cscsegm_eta);
+  // tree_->Branch("cscsegm_normchisq",&cscsegm_normchi2);
+  // tree_->Branch("cscsegm_nRecHits",&cscsegm_nRecHits);
  
   //Twinmux variables
   tree_->Branch("ltTwinMuxIn_wheel",&ltTwinMuxIn_wheel);
@@ -1595,11 +1603,11 @@ void TTreeGenerator::beginJob()
   tree_->Branch("ltTwinMuxOut_phiB",&ltTwinMuxOut_phiB);
   tree_->Branch("ltTwinMuxOut_is2nd",&ltTwinMuxOut_is2nd);
 
-  tree_->Branch("ltTwinMux_thWheel",&ltTwinMux_thWheel);
-  tree_->Branch("ltTwinMux_thSector",&ltTwinMux_thSector);
-  tree_->Branch("ltTwinMux_thStation",&ltTwinMux_thStation);
-  tree_->Branch("ltTwinMux_thBx",&ltTwinMux_thBx);
-  tree_->Branch("ltTwinMux_thHits",&ltTwinMux_thHits);
+  // tree_->Branch("ltTwinMux_thWheel",&ltTwinMux_thWheel);
+  // tree_->Branch("ltTwinMux_thSector",&ltTwinMux_thSector);
+  // tree_->Branch("ltTwinMux_thStation",&ltTwinMux_thStation);
+  // tree_->Branch("ltTwinMux_thBx",&ltTwinMux_thBx);
+  // tree_->Branch("ltTwinMux_thHits",&ltTwinMux_thHits);
 
   //muon variables
   tree_->Branch("Mu_isMuGlobal",&STAMu_isMuGlobal);
@@ -1653,138 +1661,138 @@ void TTreeGenerator::beginJob()
   tree_->Branch("TRKMu_wheel_MB4",&TRKMu_wheel_MB4);
 
   //GMT
-  tree_->Branch("gmt_bx",&gmt_bx);
-  tree_->Branch("gmt_phi",&gmt_phi);
-  tree_->Branch("gmt_eta",&gmt_eta);
-  tree_->Branch("gmt_pt",&gmt_pt);
-  tree_->Branch("gmt_charge",&gmt_charge);
-  tree_->Branch("gmt_qual",&gmt_qual);
-  tree_->Branch("gmt_tf_idx",&gmt_tf_idx);
+  // tree_->Branch("gmt_bx",&gmt_bx);
+  // tree_->Branch("gmt_phi",&gmt_phi);
+  // tree_->Branch("gmt_eta",&gmt_eta);
+  // tree_->Branch("gmt_pt",&gmt_pt);
+  // tree_->Branch("gmt_charge",&gmt_charge);
+  // tree_->Branch("gmt_qual",&gmt_qual);
+  // tree_->Branch("gmt_tf_idx",&gmt_tf_idx);
 
   //GT  // legacy
-  tree_->Branch("gt_algo_bit",&gt_algo_bit);
-  tree_->Branch("gt_algo_bx",&gt_algo_bx);
-  tree_->Branch("gt_tt_bit",&gt_tt_bit);
-  tree_->Branch("gt_tt_bx",&gt_tt_bx);
+  // tree_->Branch("gt_algo_bit",&gt_algo_bit);
+  // tree_->Branch("gt_algo_bx",&gt_algo_bx);
+  // tree_->Branch("gt_tt_bit",&gt_tt_bit);
+  // tree_->Branch("gt_tt_bx",&gt_tt_bx);
 
   //RPC
-  tree_->Branch(  "rpc_region",&rpc_region);			   
-  tree_->Branch(  "rpc_clusterSize",&rpc_clusterSize);		   
-  tree_->Branch(  "rpc_strip",&rpc_strip);			   
-  tree_->Branch(  "rpc_bx",&rpc_bx);			   
-  tree_->Branch(  "rpc_station",&rpc_station);		   
-  tree_->Branch(  "rpc_sector",&rpc_sector);		   
-  tree_->Branch(  "rpc_layer",&rpc_layer);			   
-  tree_->Branch(  "rpc_subsector",&rpc_subsector);		   
-  tree_->Branch(  "rpc_roll",&rpc_roll);			   
-  tree_->Branch(  "rpc_ring",&rpc_ring);                     
+  // tree_->Branch(  "rpc_region",&rpc_region);			   
+  // tree_->Branch(  "rpc_clusterSize",&rpc_clusterSize);		   
+  // tree_->Branch(  "rpc_strip",&rpc_strip);			   
+  // tree_->Branch(  "rpc_bx",&rpc_bx);			   
+  // tree_->Branch(  "rpc_station",&rpc_station);		   
+  // tree_->Branch(  "rpc_sector",&rpc_sector);		   
+  // tree_->Branch(  "rpc_layer",&rpc_layer);			   
+  // tree_->Branch(  "rpc_subsector",&rpc_subsector);		   
+  // tree_->Branch(  "rpc_roll",&rpc_roll);			   
+  // tree_->Branch(  "rpc_ring",&rpc_ring);                     
   
   //counters
-  tree_->Branch("Ndigis",&idigis,"Ndigis/S");
+  // tree_->Branch("Ndigis",&idigis,"Ndigis/S");
   tree_->Branch("Ndtsegments",&idtsegments,"Ndtsegments/S");
-  tree_->Branch("Ncscsegments",&icscsegments,"Ncscsegments/S");
+  // tree_->Branch("Ncscsegments",&icscsegments,"Ncscsegments/S");
   tree_->Branch("NdtltTwinMuxOut",&idtltTwinMuxOut,"NdtltTwinMuxOut/S");
-  tree_->Branch("NdtltTwinMux_th",&idtltTwinMux_th,"NdtltTwinMux_th/S");
+  // tree_->Branch("NdtltTwinMux_th",&idtltTwinMux_th,"NdtltTwinMux_th/S");
   tree_->Branch("NdtltTwinMuxIn",&idtltTwinMuxIn,"NdtltTwinMuxIn/S");
   tree_->Branch("Nmuons",&imuons,"Nmuons/S");
-  tree_->Branch("Ngmt",&igmt,"Ngmt/S");
-  tree_->Branch("Ngtalgo",&igtalgo,"Ngtalgo/S");
-  tree_->Branch("Ngttechtrig",&igttt,"Ngttt/S");
+  // tree_->Branch("Ngmt",&igmt,"Ngmt/S");
+  //tree_->Branch("Ngtalgo",&igtalgo,"Ngtalgo/S");
+  // tree_->Branch("Ngttechtrig",&igttt,"Ngttt/S");
   tree_->Branch("Nhlt",&ihlt,"Nhlt/S");
   tree_->Branch("NrpcRecHits",&irpcrechits,"NrpcRecHits/S");
   
-   // Bmtf
-   tree_->Branch("bmtfPt", &Bmtf_Pt);
-   tree_->Branch("bmtfEta", &Bmtf_Eta);
-   tree_->Branch("bmtfPhi", &Bmtf_Phi);
-   tree_->Branch("bmtfGlobalPhi", &Bmtf_GlobalPhi);
-   tree_->Branch("bmftFineBit", &Bmtf_FineBit);
-   tree_->Branch("bmtfqual", &Bmtf_qual);
-   tree_->Branch("bmtfch", &Bmtf_ch);
-   tree_->Branch("bmtfbx", &Bmtf_bx);
-   tree_->Branch("bmtfprocessor", &Bmtf_processor);
-   tree_->Branch("bmtfwh", &Bmtf_wh);
-   tree_->Branch("bmtftrAddress", &Bmtf_trAddress);
-   tree_->Branch("bmtfSize", &Bmtf_Size);
+  // Bmtf
+  // tree_->Branch("bmtfPt", &Bmtf_Pt);
+  // tree_->Branch("bmtfEta", &Bmtf_Eta);
+  // tree_->Branch("bmtfPhi", &Bmtf_Phi);
+  // tree_->Branch("bmtfGlobalPhi", &Bmtf_GlobalPhi);
+  // tree_->Branch("bmftFineBit", &Bmtf_FineBit);
+  // tree_->Branch("bmtfqual", &Bmtf_qual);
+  // tree_->Branch("bmtfch", &Bmtf_ch);
+  // tree_->Branch("bmtfbx", &Bmtf_bx);
+  // tree_->Branch("bmtfprocessor", &Bmtf_processor);
+  // tree_->Branch("bmtfwh", &Bmtf_wh);
+  // tree_->Branch("bmtftrAddress", &Bmtf_trAddress);
+  // tree_->Branch("bmtfSize", &Bmtf_Size);
    
-   tree_->Branch("bmtfPhSize", &Bmtf_phSize);
-   tree_->Branch("bmtfPhBx", &Bmtf_phBx);
-   tree_->Branch("bmtfPhWh", &Bmtf_phWh);
-   tree_->Branch("bmtfPhSe", &Bmtf_phSe);
-   tree_->Branch("bmtfPhSt", &Bmtf_phSt);
-   tree_->Branch("bmtfPhAng", &Bmtf_phAng);
-   tree_->Branch("bmtfPhBandAng", &Bmtf_phBandAng);
-   tree_->Branch("bmtfPhCode", &Bmtf_phCode);
-   tree_->Branch("bmtfPhTs2Tag", &Bmtf_phTs2Tag);
-   
-   tree_->Branch("bmtfThSize", &Bmtf_thSize);
-   tree_->Branch("bmtfThBx", &Bmtf_thBx);
-   tree_->Branch("bmtfThWh", &Bmtf_thWh);
-   tree_->Branch("bmtfThSe", &Bmtf_thSe);
-   tree_->Branch("bmtfThSt", &Bmtf_thSt);
-   tree_->Branch("bmtfThTheta", &Bmtf_thTheta);
-   tree_->Branch("bmtfThCode", &Bmtf_thCode);
+  // tree_->Branch("bmtfPhSize", &Bmtf_phSize);
+  // tree_->Branch("bmtfPhBx", &Bmtf_phBx);
+  // tree_->Branch("bmtfPhWh", &Bmtf_phWh);
+  // tree_->Branch("bmtfPhSe", &Bmtf_phSe);
+  // tree_->Branch("bmtfPhSt", &Bmtf_phSt);
+  // tree_->Branch("bmtfPhAng", &Bmtf_phAng);
+  // tree_->Branch("bmtfPhBandAng", &Bmtf_phBandAng);
+  // tree_->Branch("bmtfPhCode", &Bmtf_phCode);
+  // tree_->Branch("bmtfPhTs2Tag", &Bmtf_phTs2Tag);
+  
+  // tree_->Branch("bmtfThSize", &Bmtf_thSize);
+  // tree_->Branch("bmtfThBx", &Bmtf_thBx);
+  // tree_->Branch("bmtfThWh", &Bmtf_thWh);
+  // tree_->Branch("bmtfThSe", &Bmtf_thSe);
+  // tree_->Branch("bmtfThSt", &Bmtf_thSt);
+  // tree_->Branch("bmtfThTheta", &Bmtf_thTheta);
+  // tree_->Branch("bmtfThCode", &Bmtf_thCode);
   
 
-   // Unpacking RPC
-   tree_->Branch("NirpcdigiTwinMux", &irpcdigi_TwinMux);
-   tree_->Branch("RpcDigiTwinMuxBx", &RpcDigi_TwinMux_bx);
-   tree_->Branch("RpcDigiTwinMuxStrip", &RpcDigi_TwinMux_strip);
-   tree_->Branch("RpcDigiTwinMuxRegion", &RpcDigi_TwinMux_region);
-   tree_->Branch("RpcDigiTwinMuxRing", &RpcDigi_TwinMux_ring);
-   tree_->Branch("RpcDigiTwinMuxStation", &RpcDigi_TwinMux_station);
-   tree_->Branch("RpcDigiTwinMuxLayer", &RpcDigi_TwinMux_layer);
-   tree_->Branch("RpcDigiTwinMuxSector", &RpcDigi_TwinMux_sector);
-   tree_->Branch("RpcDigiTwinMuxSubSector", &RpcDigi_TwinMux_subsector);
-   tree_->Branch("RpcDigiTwinMuxRoll", &RpcDigi_TwinMux_roll);
-   tree_->Branch("RpcDigiTwinMuxTrIndex", &RpcDigi_TwinMux_trIndex);
-   tree_->Branch("RpcDigiTwinMuxDet", &RpcDigi_TwinMux_det);
-   tree_->Branch("RpcDigiTwinMuxSubdetId", &RpcDigi_TwinMux_subdetId);
-   tree_->Branch("RpcDigiTwinMuxRawId", &RpcDigi_TwinMux_rawId);
-
-   //Unpacking RPC RecHit
-   tree_->Branch("NirpcrechitsTwinMux", &irpcrechits_TwinMux);
-   tree_->Branch("RpcRecHitTwinMuxRegion", &RpcRechit_TwinMux_region);
-   tree_->Branch("RpcRecHitTwinMuxClusterSize", &RpcRechit_TwinMux_clusterSize);
-   tree_->Branch("RpcRecHitTwinMuxStrip", &RpcRechit_TwinMux_strip);
-   tree_->Branch("RpcRecHitTwinMuxBx", &RpcRechit_TwinMux_bx);
-   tree_->Branch("RpcRecHitTwinMuxStation", &RpcRechit_TwinMux_station);
-   tree_->Branch("RpcRecHitTwinMuxSector", &RpcRechit_TwinMux_sector);
-   tree_->Branch("RpcRecHitTwinMuxLayer", &RpcRechit_TwinMux_layer);
-   tree_->Branch("RpcRecHitTwinMuxSubsector", &RpcRechit_TwinMux_subsector);
-   tree_->Branch("RpcRecHitTwinMuxRoll", &RpcRechit_TwinMux_roll);
-   tree_->Branch("RpcRecHitTwinMuxRing", &RpcRechit_TwinMux_ring);
-   tree_->Branch("RpcRechitTwinMuxLocX", &RpcRechit_TwinMux_Loc_x);
-   tree_->Branch("RpcRechitTwinMuxLocY", &RpcRechit_TwinMux_Loc_y);
-   tree_->Branch("RpcRechitTwinMuxLocZ", &RpcRechit_TwinMux_Loc_z);
-   tree_->Branch("RpcRechitTwinMuxLocEta", &RpcRechit_TwinMux_Loc_eta);
-   tree_->Branch("RpcRechitTwinMuxLocPhi", &RpcRechit_TwinMux_Loc_phi);
-   tree_->Branch("RpcRechitTwinMuxGlobX", &RpcRechit_TwinMux_Glob_x);
-   tree_->Branch("RpcRechitTwinMuxGlobY", &RpcRechit_TwinMux_Glob_y);
-   tree_->Branch("RpcRechitTwinMuxGlobZ", &RpcRechit_TwinMux_Glob_z);
-   tree_->Branch("RpcRechitTwinMuxGlobEta", &RpcRechit_TwinMux_Glob_eta);
-   tree_->Branch("RpcRechitTwinMuxGlobPhi", &RpcRechit_TwinMux_Glob_phi);
-      
-   tree_->Branch("DTextrapolatedOnRPCBX", &DT_extrapolated_OnRPC_BX);
-   tree_->Branch("DTextrapolatedOnRPCLocX", &DT_extrapolated_OnRPC_Loc_x);
-   tree_->Branch("DTextrapolatedOnRPCLocY", &DT_extrapolated_OnRPC_Loc_y);
-   tree_->Branch("DTextrapolatedOnRPCLocZ", &DT_extrapolated_OnRPC_Loc_z);
-   tree_->Branch("DTextrapolatedOnRPCLocEta", &DT_extrapolated_OnRPC_Loc_eta);
-   tree_->Branch("DTextrapolatedOnRPCLocPhi", &DT_extrapolated_OnRPC_Loc_phi);
-   tree_->Branch("DTextrapolatedOnRPCGlobX", &DT_extrapolated_OnRPC_Glob_x);
-   tree_->Branch("DTextrapolatedOnRPCGlobY", &DT_extrapolated_OnRPC_Glob_y);
-   tree_->Branch("DTextrapolatedOnRPCGlobZ", &DT_extrapolated_OnRPC_Glob_z);
-   tree_->Branch("DTextrapolatedOnRPCGlobEta", &DT_extrapolated_OnRPC_Glob_eta);
-   tree_->Branch("DTextrapolatedOnRPCGlobPhi", &DT_extrapolated_OnRPC_Glob_phi);
-   tree_->Branch("DTextrapolatedOnRPCRegion", &DT_extrapolated_OnRPC_Region);
-   tree_->Branch("DTextrapolatedOnRPCSector", &DT_extrapolated_OnRPC_Sector);
-   tree_->Branch("DTextrapolatedOnRPCStation", &DT_extrapolated_OnRPC_Station);
-   tree_->Branch("DTextrapolatedOnRPCLayer", &DT_extrapolated_OnRPC_Layer);
-   tree_->Branch("DTextrapolatedOnRPCRoll", &DT_extrapolated_OnRPC_Roll);
-   tree_->Branch("DTextrapolatedOnRPCRing", &DT_extrapolated_OnRPC_Ring);
-   tree_->Branch("DTextrapolatedOnRPCStripw", &DT_extrapolated_OnRPC_Stripw);
-   tree_->Branch("NDTsegmentonRPC", &DT_segment_onRPC);
-
+  // Unpacking RPC
+  // tree_->Branch("NirpcdigiTwinMux", &irpcdigi_TwinMux);
+  // tree_->Branch("RpcDigiTwinMuxBx", &RpcDigi_TwinMux_bx);
+  // tree_->Branch("RpcDigiTwinMuxStrip", &RpcDigi_TwinMux_strip);
+  // tree_->Branch("RpcDigiTwinMuxRegion", &RpcDigi_TwinMux_region);
+  // tree_->Branch("RpcDigiTwinMuxRing", &RpcDigi_TwinMux_ring);
+  // tree_->Branch("RpcDigiTwinMuxStation", &RpcDigi_TwinMux_station);
+  // tree_->Branch("RpcDigiTwinMuxLayer", &RpcDigi_TwinMux_layer);
+  // tree_->Branch("RpcDigiTwinMuxSector", &RpcDigi_TwinMux_sector);
+  // tree_->Branch("RpcDigiTwinMuxSubSector", &RpcDigi_TwinMux_subsector);
+  // tree_->Branch("RpcDigiTwinMuxRoll", &RpcDigi_TwinMux_roll);
+  // tree_->Branch("RpcDigiTwinMuxTrIndex", &RpcDigi_TwinMux_trIndex);
+  // tree_->Branch("RpcDigiTwinMuxDet", &RpcDigi_TwinMux_det);
+  // tree_->Branch("RpcDigiTwinMuxSubdetId", &RpcDigi_TwinMux_subdetId);
+  // tree_->Branch("RpcDigiTwinMuxRawId", &RpcDigi_TwinMux_rawId);
+  
+  //Unpacking RPC RecHit
+  tree_->Branch("NirpcrechitsTwinMux", &irpcrechits_TwinMux);
+  tree_->Branch("RpcRecHitTwinMuxRegion", &RpcRechit_TwinMux_region);
+  tree_->Branch("RpcRecHitTwinMuxClusterSize", &RpcRechit_TwinMux_clusterSize);
+  tree_->Branch("RpcRecHitTwinMuxStrip", &RpcRechit_TwinMux_strip);
+  tree_->Branch("RpcRecHitTwinMuxBx", &RpcRechit_TwinMux_bx);
+  tree_->Branch("RpcRecHitTwinMuxStation", &RpcRechit_TwinMux_station);
+  tree_->Branch("RpcRecHitTwinMuxSector", &RpcRechit_TwinMux_sector);
+  tree_->Branch("RpcRecHitTwinMuxLayer", &RpcRechit_TwinMux_layer);
+  tree_->Branch("RpcRecHitTwinMuxSubsector", &RpcRechit_TwinMux_subsector);
+  tree_->Branch("RpcRecHitTwinMuxRoll", &RpcRechit_TwinMux_roll);
+  tree_->Branch("RpcRecHitTwinMuxRing", &RpcRechit_TwinMux_ring);
+  tree_->Branch("RpcRechitTwinMuxLocX", &RpcRechit_TwinMux_Loc_x);
+  tree_->Branch("RpcRechitTwinMuxLocY", &RpcRechit_TwinMux_Loc_y);
+  tree_->Branch("RpcRechitTwinMuxLocZ", &RpcRechit_TwinMux_Loc_z);
+  tree_->Branch("RpcRechitTwinMuxLocEta", &RpcRechit_TwinMux_Loc_eta);
+  tree_->Branch("RpcRechitTwinMuxLocPhi", &RpcRechit_TwinMux_Loc_phi);
+  tree_->Branch("RpcRechitTwinMuxGlobX", &RpcRechit_TwinMux_Glob_x);
+  tree_->Branch("RpcRechitTwinMuxGlobY", &RpcRechit_TwinMux_Glob_y);
+  tree_->Branch("RpcRechitTwinMuxGlobZ", &RpcRechit_TwinMux_Glob_z);
+  tree_->Branch("RpcRechitTwinMuxGlobEta", &RpcRechit_TwinMux_Glob_eta);
+  tree_->Branch("RpcRechitTwinMuxGlobPhi", &RpcRechit_TwinMux_Glob_phi);
+  
+  tree_->Branch("DTextrapolatedOnRPCBX", &DT_extrapolated_OnRPC_BX);
+  tree_->Branch("DTextrapolatedOnRPCLocX", &DT_extrapolated_OnRPC_Loc_x);
+  tree_->Branch("DTextrapolatedOnRPCLocY", &DT_extrapolated_OnRPC_Loc_y);
+  tree_->Branch("DTextrapolatedOnRPCLocZ", &DT_extrapolated_OnRPC_Loc_z);
+  tree_->Branch("DTextrapolatedOnRPCLocEta", &DT_extrapolated_OnRPC_Loc_eta);
+  tree_->Branch("DTextrapolatedOnRPCLocPhi", &DT_extrapolated_OnRPC_Loc_phi);
+  tree_->Branch("DTextrapolatedOnRPCGlobX", &DT_extrapolated_OnRPC_Glob_x);
+  tree_->Branch("DTextrapolatedOnRPCGlobY", &DT_extrapolated_OnRPC_Glob_y);
+  tree_->Branch("DTextrapolatedOnRPCGlobZ", &DT_extrapolated_OnRPC_Glob_z);
+  tree_->Branch("DTextrapolatedOnRPCGlobEta", &DT_extrapolated_OnRPC_Glob_eta);
+  tree_->Branch("DTextrapolatedOnRPCGlobPhi", &DT_extrapolated_OnRPC_Glob_phi);
+  tree_->Branch("DTextrapolatedOnRPCRegion", &DT_extrapolated_OnRPC_Region);
+  tree_->Branch("DTextrapolatedOnRPCSector", &DT_extrapolated_OnRPC_Sector);
+  tree_->Branch("DTextrapolatedOnRPCStation", &DT_extrapolated_OnRPC_Station);
+  tree_->Branch("DTextrapolatedOnRPCLayer", &DT_extrapolated_OnRPC_Layer);
+  tree_->Branch("DTextrapolatedOnRPCRoll", &DT_extrapolated_OnRPC_Roll);
+  tree_->Branch("DTextrapolatedOnRPCRing", &DT_extrapolated_OnRPC_Ring);
+  tree_->Branch("DTextrapolatedOnRPCStripw", &DT_extrapolated_OnRPC_Stripw);
+  tree_->Branch("NDTsegmentonRPC", &DT_segment_onRPC);
+  
   return;
 }
 
@@ -1800,13 +1808,13 @@ void TTreeGenerator::endJob()
 inline void TTreeGenerator::clear_Arrays()
 {
   //digi variables
-  digi_wheel.clear();
-  digi_sector.clear();
-  digi_station.clear();
-  digi_sl.clear();
-  digi_layer.clear();
-  digi_wire.clear();
-  digi_time.clear();
+  // digi_wheel.clear();
+  // digi_sector.clear();
+  // digi_station.clear();
+  // digi_sl.clear();
+  // digi_layer.clear();
+  // digi_wire.clear();
+  // digi_time.clear();
 
   //DT segment variables 
   segm4D_wheel.clear();
@@ -1858,16 +1866,16 @@ inline void TTreeGenerator::clear_Arrays()
   segm4D_zHits_TimeCali->Clear();
 
   //CSC segment variables 
-  cscsegm_ring.clear();
-  cscsegm_chamber.clear();
-  cscsegm_station.clear();
-  cscsegm_cosx.clear();
-  cscsegm_cosy.clear();
-  cscsegm_cosz.clear();
-  cscsegm_phi.clear();
-  cscsegm_eta.clear();
-  cscsegm_normchi2.clear();
-  cscsegm_nRecHits.clear();
+  // cscsegm_ring.clear();
+  // cscsegm_chamber.clear();
+  // cscsegm_station.clear();
+  // cscsegm_cosx.clear();
+  // cscsegm_cosy.clear();
+  // cscsegm_cosz.clear();
+  // cscsegm_phi.clear();
+  // cscsegm_eta.clear();
+  // cscsegm_normchi2.clear();
+  // cscsegm_nRecHits.clear();
 
   //TM Variables
   ltTwinMuxIn_wheel.clear();
@@ -1889,11 +1897,11 @@ inline void TTreeGenerator::clear_Arrays()
   ltTwinMuxOut_phiB.clear();
   ltTwinMuxOut_is2nd.clear();
 
-  ltTwinMux_thWheel.clear();
-  ltTwinMux_thSector.clear();
-  ltTwinMux_thStation.clear();
-  ltTwinMux_thBx.clear();
-  ltTwinMux_thHits.clear();
+  // ltTwinMux_thWheel.clear();
+  // ltTwinMux_thSector.clear();
+  // ltTwinMux_thStation.clear();
+  // ltTwinMux_thBx.clear();
+  // ltTwinMux_thHits.clear();
 
   //muon variables
   STAMu_isMuGlobal.clear();
@@ -1953,19 +1961,19 @@ inline void TTreeGenerator::clear_Arrays()
   TRKMu_wheel_MB4.clear();
 
   //GMT
-  gmt_bx.clear();
-  gmt_phi.clear();
-  gmt_eta.clear();
-  gmt_pt.clear();
-  gmt_qual.clear();
-  gmt_charge.clear();
-  gmt_tf_idx.clear();
+  // gmt_bx.clear();
+  // gmt_phi.clear();
+  // gmt_eta.clear();
+  // gmt_pt.clear();
+  // gmt_qual.clear();
+  // gmt_charge.clear();
+  // gmt_tf_idx.clear();
 
   //GT
-  gt_algo_bit.clear();
-  gt_algo_bx.clear();
-  gt_tt_bit.clear();
-  gt_tt_bx.clear();
+  // gt_algo_bit.clear();
+  // gt_algo_bx.clear();
+  // gt_tt_bit.clear();
+  // gt_tt_bx.clear();
 
   //HLT
   hlt_path.clear();
@@ -1976,59 +1984,59 @@ inline void TTreeGenerator::clear_Arrays()
   hlt_filter_pt.clear();
 
   // RPC rec hits
-  rpc_region.clear();
-  rpc_clusterSize.clear();
-  rpc_strip.clear();
-  rpc_bx.clear();
-  rpc_station.clear();
-  rpc_sector.clear();
-  rpc_layer.clear();
-  rpc_subsector.clear();
-  rpc_roll.clear();
-  rpc_ring.clear();
+  // rpc_region.clear();
+  // rpc_clusterSize.clear();
+  // rpc_strip.clear();
+  // rpc_bx.clear();
+  // rpc_station.clear();
+  // rpc_sector.clear();
+  // rpc_layer.clear();
+  // rpc_subsector.clear();
+  // rpc_roll.clear();
+  // rpc_ring.clear();
   
   //Bmtf_Size.clear();
-  Bmtf_Pt.clear();
-  Bmtf_Eta.clear();
-  Bmtf_Phi.clear();
-  Bmtf_GlobalPhi.clear();
-  Bmtf_qual.clear();
-  Bmtf_ch.clear();
-  Bmtf_bx.clear();
-  Bmtf_processor.clear();
-  Bmtf_trAddress.clear();
-  Bmtf_wh.clear();
-  Bmtf_FineBit.clear();
+  // Bmtf_Pt.clear();
+  // Bmtf_Eta.clear();
+  // Bmtf_Phi.clear();
+  // Bmtf_GlobalPhi.clear();
+  // Bmtf_qual.clear();
+  // Bmtf_ch.clear();
+  // Bmtf_bx.clear();
+  // Bmtf_processor.clear();
+  // Bmtf_trAddress.clear();
+  // Bmtf_wh.clear();
+  // Bmtf_FineBit.clear();
   
-  Bmtf_phBx.clear();
-  Bmtf_phWh.clear();
-  Bmtf_phSe.clear();
-  Bmtf_phSt.clear();
-  Bmtf_phAng.clear();
-  Bmtf_phBandAng.clear();
-  Bmtf_phCode.clear();
-  Bmtf_phTs2Tag.clear();
+  // Bmtf_phBx.clear();
+  // Bmtf_phWh.clear();
+  // Bmtf_phSe.clear();
+  // Bmtf_phSt.clear();
+  // Bmtf_phAng.clear();
+  // Bmtf_phBandAng.clear();
+  // Bmtf_phCode.clear();
+  // Bmtf_phTs2Tag.clear();
   
-  Bmtf_thBx.clear();
-  Bmtf_thWh.clear();
-  Bmtf_thSe.clear();
-  Bmtf_thSt.clear();
-  Bmtf_thTheta.clear();
-  Bmtf_thCode.clear();
+  // Bmtf_thBx.clear();
+  // Bmtf_thWh.clear();
+  // Bmtf_thSe.clear();
+  // Bmtf_thSt.clear();
+  // Bmtf_thTheta.clear();
+  // Bmtf_thCode.clear();
   
-  RpcDigi_TwinMux_bx.clear();
-  RpcDigi_TwinMux_strip.clear();
-  RpcDigi_TwinMux_region.clear();
-  RpcDigi_TwinMux_ring.clear();
-  RpcDigi_TwinMux_station.clear();
-  RpcDigi_TwinMux_layer.clear();
-  RpcDigi_TwinMux_sector.clear();
-  RpcDigi_TwinMux_subsector.clear();
-  RpcDigi_TwinMux_roll.clear();
-  RpcDigi_TwinMux_trIndex.clear();
-  RpcDigi_TwinMux_det.clear();
-  RpcDigi_TwinMux_subdetId.clear();
-  RpcDigi_TwinMux_rawId.clear();
+  // RpcDigi_TwinMux_bx.clear();
+  // RpcDigi_TwinMux_strip.clear();
+  // RpcDigi_TwinMux_region.clear();
+  // RpcDigi_TwinMux_ring.clear();
+  // RpcDigi_TwinMux_station.clear();
+  // RpcDigi_TwinMux_layer.clear();
+  // RpcDigi_TwinMux_sector.clear();
+  // RpcDigi_TwinMux_subsector.clear();
+  // RpcDigi_TwinMux_roll.clear();
+  // RpcDigi_TwinMux_trIndex.clear();
+  // RpcDigi_TwinMux_det.clear();
+  // RpcDigi_TwinMux_subdetId.clear();
+  // RpcDigi_TwinMux_rawId.clear();
   
   // Unpacking RPC rec hits
   RpcRechit_TwinMux_region.clear();
