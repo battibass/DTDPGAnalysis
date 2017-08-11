@@ -55,37 +55,19 @@ void RPC_studies::Loop()
     if(jentry % 10000 == 0) 
       std::cout << "[RPC_studies::Loop] processed : " << jentry << " entries\r";
       
-    muon_index = RPC_studies::Selection();
+    const auto tnpPairs = RPC_studies::TnPSelection(81.,101.);
       
-    for(int mu = 0; mu < muon_index.index.size(); mu++){
-      
-      MuPt = muon_index.pt.at(mu);
-      MuEta = muon_index.eta.at(mu);
-      MuPhi = muon_index.phi.at(mu);
-      		
-      probe_muon.SetPtEtaPhiM(MuPt, MuEta, MuPhi, 0.105);
+    for(const auto & pair : pairs) {
 
-// 			h_Zmumu_Mass->Fill(Mass(tag_muon, probe_muon));
+      // the first  element of the pair is the index of the tag muon
+      // the second element of the pair is the index of the probe muon
+      // we want to study the probe
+      std::size_t iProbe = pair.second;
 
-      
-//       }
-//       for(int mu = 0; mu < Nmuons; mu++){
-
-		//////// muon selection
-//       	Mu_pt = sqrt(Mu_px->at(mu)*Mu_px->at(mu) + Mu_py->at(mu)*Mu_py->at(mu));
-//       	
-// 		if(Mu_isMuGlobal->at(mu) !=1 || Mu_isMuTracker->at(mu) !=1 ||
-// 				fabs(Mu_dxy_glb->at(mu)) > D0_cut || fabs(Mu_dz_glb->at(mu)) > Dz_cut ||
-// 				fabs(Mu_eta->at(mu)) > eta_cut || (Mu_normchi2_glb->at(mu)) > muchi2_cut ||
-// 				Mu_pt < pt_cut || Mu_pt > pt_max || 
-// 				Mu_numberOfHits_sta->at(mu) < N_hits_cut || 
-// 				Mu_numberOfPixelHits_glb->at(mu) < npix_cut ||
-// 				Mu_numberOfTrackerHits_glb->at(mu) < ntkr_cut) continue;
-// 
-// 		if(Mu_pt < pt_localtrig_cut) continue;
-		
-		//////// muon selection
-
+      probeVec.SetPxPyPxM(Mu_px->at(iProbe),
+			  Mu_py->at(iProbe),
+			  Mu_pz->at(iProbe),
+			  0.106);
       
       count_muon++;		
       
@@ -108,24 +90,21 @@ void RPC_studies::Loop()
 	if(dtsegm4D_hasZed->at(dtsegm) <= 0) continue;
 	if(dtsegm4D_phinhits->at(dtsegm) <= 0) continue;  				
 	
-	delta_phi = abs(dtsegm4D_phi->at(dtsegm) - MuPhi);
-	if(delta_phi > pig) delta_phi=2*pig-delta_phi;
-	
-	delta_eta = 0.;
-	if(dtsegm4D_hasZed->at(dtsegm) != 0) 
-	  delta_eta = abs(dtsegm4D_eta->at(dtsegm)-MuEta);
-	
 	///// station 1 /////
-	
-	if(dtsegm4D_station->at(dtsegm) == 1){
-	  deltaR_MB1 = sqrt(delta_phi*delta_phi + delta_eta*delta_eta);
-	  if(deltaR_MB1 < min_DT_MB1_muon){	
-	    min_DT_MB1_muon = deltaR_MB1;
-	  }
-	  else 
-	    continue;
-	  
-	  h_dist_DT_MB1_muon->Fill(min_DT_MB1_muon);
+
+	Float_t minDrMB1 = 999.
+	if(Mu_sector_MB1->at(iProbe) > 0  && // non valid matches are -999
+	   dtsegm4D_sector->at(dtsegm) == Mu_sector_MB1->at(iProbe) &&
+	   dtsegm4D_wheel->at(dtsegm)  == Mu_sector_MB1->at(iProbe) )
+	  {
+	    
+	    Float_t dRMB1 = 
+	    (Mu_x_MB1->at(iProbe) - dtsegm4D_x->at(dtsegm)) *
+	    (Mu_x_MB1->at(iProbe) - dtsegm4D_x->at(dtsegm)) +
+	    (Mu_y_MB1->at(iProbe) - dtsegm4D_y->at(dtsegm)) *
+	    (Mu_y_MB1->at(iProbe) - dtsegm4D_y->at(dtsegm))
+	    
+	    h_dist_DT_MB1_muon->Fill(dRMB1);
 	  
 	  if(min_DT_MB1_muon < 0.4){
 	    dtsegment_index[0] = dtsegm;
@@ -463,70 +442,91 @@ void RPC_studies::Loop()
 }
 
 
-RPC_studies::muons_vector RPC_studies::Selection()
+vector<std::pair<std::size_t,std::size_t> RPC_studies::TnPSelection(Float_t minMass,
+								    Float_t maxMass)
 {
 
-  vector<int> index;
-  vector<float> pt;
-  vector<float> eta;
-  vector<float> phi;
-  bool probe;
-  index.clear();
-  pt.clear();
-  eta.clear();
-  phi.clear();
-  
-  float Mu_pt = -999;
-	
-	   		
-  for(int mu = 0; mu < Nmuons; mu++){
+  vector<std::pair<std::size_t,std::size_t> pairs;
+
+  for(std::size_t iTag = 0; iTag < Nmuons; ++iTag) 
+    {
     
-    Mu_pt = sqrt(Mu_px->at(mu)*Mu_px->at(mu) + Mu_py->at(mu)*Mu_py->at(mu));
+      TLorentzVector tagVec;
+      tagVec.setPxPzPzM(Mu_px->at(iTag),
+			Mu_py->at(iTag),
+			Mu_pz->at(iTag),
+			0.106);
     
-    if(Mu_isMuGlobal->at(mu) !=1 || Mu_isMuTracker->at(mu) !=1 ||
-       fabs(Mu_dxy_glb->at(mu)) > D0_cut || fabs(Mu_dz_glb->at(mu)) > Dz_cut ||
-       fabs(Mu_eta->at(mu)) > eta_cut || (Mu_normchi2_glb->at(mu)) > muchi2_cut ||
-       Mu_pt < pt_cut || Mu_pt > pt_max || 
-       Mu_numberOfHits_sta->at(mu) < N_hits_cut || 
-       Mu_numberOfPixelHits_glb->at(mu) < npix_cut ||
-       Mu_numberOfTrackerHits_glb->at(mu) < ntkr_cut) continue;
-    
-    else{			
-      index.push_back(mu);
-      pt.push_back(Mu_pt);
-      eta.push_back(Mu_eta->at(mu));
-      phi.push_back(Mu_phi->at(mu));
-      probe = true;
+      Bool_t tagQuality = 
+	Mu_isMuGlobal->at(iTag)  ==1 &&
+	Mu_isMuTracker->at(iTag) ==1 &&
+	fabs(Mu_dxy_glb->at(iTag)) < D0_cut &&
+	fabs(Mu_dz_glb->at(iTag))  < Dz_cut &&
+	Mu_normchi2_glb->at(iTag)  < muchi2_cut &&
+	Mu_numberOfHits_sta->at(iTag)        > N_hits_cut && 
+	Mu_numberOfPixelHits_glb->at(iTag)   > npix_cut   &&
+	Mu_numberOfTrackerHits_glb->at(iTag) > ntkr_cut   &&   
+	tagVec.Pt() > pt_cut ;
+      
+      if(tagQuality && HasTrigger(tagVec,0.10)) 
+	{
+	  
+	  for(std::size_t iProbe = iTag + 1; iProbe < Nmuons; ++iProbe) 
+	    {
+
+	      TLorentzVector probeVec;
+	      probeVec.setPxPzPzM(Mu_px->at(iProbe),
+				Mu_py->at(iProbe),
+				Mu_pz->at(iProbe),
+				0.106);
+
+	      Bool_t probeQuality =
+		Mu_isMuTracker->at(iProbe) ==1 &&
+		fabs(Mu_dxy_glb->at(iProbe)) < D0_cut &&
+		fabs(Mu_dz_glb->at(iProbe))  < Dz_cut &&
+		Mu_numberOfPixelHits_glb->at(iProbe)   > npix_cut   &&
+		Mu_numberOfTrackerHits_glb->at(iProbe) > ntkr_cut   &&
+		probeVec.Pt() > pt_cut;
+
+	      if (probeQuality)
+		{
+
+		  Float_t mass = (tagVec + probeVec).M();
+
+		  if (mass > minMass && mass < maxMass)
+		    {
+		      pairs.push_back(std::make_pait(iTag,iProbe));
+		      break; // just one probe per tag
+		    }
+		} 
+	    }
+	}
     }
-  }
-  
-  muons_vector good_muons = {index, pt, eta, phi, probe};
-					
-  return good_muons;	
+
+  return pairs;
 
 }
 
-float RPC_studies::Mass(TLorentzVector v1, TLorentzVector v2){
-	
-  float massWW;
-  float ener1, ener2;
-  float px1, px2;
-  float py1, py2;
-  float pz1, pz2;
-  
-  ener1 = v1.E();
-  px1 = v1.Px();
-  py1 = v1.Py();
-  pz1 = v1.Pz();
-  
-  ener2 = v2.E();
-  px2 = v2.Px();
-  py2 = v2.Py();
-  pz2 = v2.Pz();
-  
-  massWW = sqrt((ener1+ener2)*(ener1+ener2)-(px1+px2)*(px1+px2)-(py1+py2)*(py1+py2)-(pz1+pz2)*(pz1+pz2));
-  
-  return massWW;
+float RPC_studies::HasTrigger(const TLorentzVector & muon,
+			      Float_t deltaR) {
+
+    for(std::size_t iTrig = 0; iProbe < ihlt; ++iTrig)
+      {
+
+	if (hlt_filter->at(iTrig).find("hltL3crIsoL1sMu22L1f0L2f10QL3f24QL3trkIsoFiltered0p09") != std::string::npos)
+	  {
+	    TLorentzVector trigVec;
+	    tagVec.setPtEtaPhiM(hlt_filter_pt->at(iTrig),
+				hlt_filter_eta->at(iTrig),
+				hlt_filter_phi->at(iTrig),
+				0.106);
+
+	    if (trigVec.DeltaR(muon) < deltaR)
+	      return true;
+	  }
+      }
+
+    return false;
   
 }
 

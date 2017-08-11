@@ -310,23 +310,23 @@ class RPC_studies {
 
   vector<float>   *Mu_x_MB1;
   vector<float>   *Mu_y_MB1;
-  vector<float>   *Mu_wheel_MB1;
-  vector<float>   *Mu_sector_MB1;
+  vector<short>   *Mu_wheel_MB1;
+  vector<short>   *Mu_sector_MB1;
 
   vector<float>   *Mu_x_MB2;
   vector<float>   *Mu_y_MB2;
-  vector<float>   *Mu_wheel_MB2;
-  vector<float>   *Mu_sector_MB2;
+  vector<short>   *Mu_wheel_MB2;
+  vector<short>   *Mu_sector_MB2;
 
   vector<float>   *Mu_x_MB3;
   vector<float>   *Mu_y_MB3;
-  vector<float>   *Mu_wheel_MB3;
-  vector<float>   *Mu_sector_MB3;
+  vector<short>   *Mu_wheel_MB3;
+  vector<short>   *Mu_sector_MB3;
 
   vector<float>   *Mu_x_MB4;
   vector<float>   *Mu_y_MB4;
-  vector<float>   *Mu_wheel_MB4;
-  vector<float>   *Mu_sector_MB4;
+  vector<short>   *Mu_wheel_MB4;
+  vector<short>   *Mu_sector_MB4;
 
 //    vector<short>   *gmt_bx;
 //    vector<float>   *gmt_phi;
