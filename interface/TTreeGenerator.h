@@ -163,7 +163,8 @@ private:
   short igmt;
   short igtalgo; // legacy
   short igttt; // legacy
-  short ihlt;
+  short ihltFilters;
+  short ihltPaths;
   short irpcrechits;
   short irpcdigi_TwinMux;
   short irpcrechits_TwinMux;
