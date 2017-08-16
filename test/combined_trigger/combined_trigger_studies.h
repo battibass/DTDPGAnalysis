@@ -5,8 +5,8 @@
 // found on file: /afs/cern.ch/work/f/ferrico/private/DT_update/CMSSW_9_0_0_pre4/src/UserCode/DTDPGAnalysis/test/DTNtuple.root
 //////////////////////////////////////////////////////////
 
-#ifndef RPC_studies_h
-#define RPC_studies_h
+#ifndef combined_trigger_studies_h
+#define combined_trigger_studies_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -14,155 +14,50 @@
 
 // Header file for the classes stored in the TTree if any.
 #include "vector"
-#include "vector"
-#include "vector"
 #include "TClonesArray.h"
 #include "vector"
 #include "TLorentzVector.h"
 
-class RPC_studies {
+class combined_trigger_studies {
  public :
   TTree          *fChain;   //!pointer to the analyzed TTree or TChain
   Int_t           fCurrent; //!current Tree number in a TChain
 
-  typedef struct 
-  {
-    vector<int> index;
-    vector<float> pt;
-    vector<float> eta;
-    vector<float> phi;
-    bool probe;
-  } muons_vector; 
-
-// Fixed size dimensions of array or collections stored in the TTree if any.
+  // Fixed size dimensions of array or collections stored in the TTree if any.
 			
-  int count = 0;
-  int station_1_num = 0;
-  int station_1_den = 0;
-  int station_2_num = 0;
-  int station_2_den = 0;
-	
-  muons_vector muon_index;
+  Float_t pig = acos(-1.);
   
-  TLorentzVector tag_muon;
-  TLorentzVector probe_muon;
-  
-  float delta_phi;
-  float delta_eta;
-  float deltaR_MB1;
-  float deltaR_MB2;
-  float min_DT_MB1_muon;
-  bool match_DT_MB1_muon;
-  float min_DT_MB2_muon;
-  bool match_DT_MB2_muon;
-  float pig = acos(-1.);
-  float MuPt, MuEta, MuPhi;
-  float eta_mu[2] = {-999,-999};
-  float phi_mu[2] = {-999,-999};
-  float pt_mu[2] = {-999,-999};
-  
-  // GLOBAL MUON CUTS   	
-  float D0_cut =1.0; // 0.2;
-  float Dz_cut = 24.; //24.;
-  float pt_cut=3.;  // def = 3
-  float pt_max=3000.;
-  float eta_cut = 1.2; 
-  float N_hits_cut = 4; 
-  float muchi2_cut=10.;
-  float npix_cut=1;
-  float ntkr_cut=5;
-  int ntrig_In_max = 7;
-  
-  float pt_localtrig_cut = 14.0;
-  
-  float clsCut = 3;
-  float rangestrips = 4;
-  int RPC_cluSize[2] = {0};
-  int RPC_BX[2][5][2][12] = {0};
-  float stripw[2] = {0};
-  
-  int den[2][5][2][12]= {0};
-  float min_layer[2];
-  float dist_layer[2];
-  
-  int dt_ring;
-  int dt_station;
-  int dt_sector;
-  
-  int iWh_In, iSt_In, iSec_In;
-  int iWh_Out, iSt_Out, iSec_Out;
-  int bx_In, bx_Out;
-  float min_dtSegm_In;
-  int extra_layer[2] = {-999,-999};
-  int dtsegment_index[2] = {-999,-999};
-  
-  bool rpc_extrapolation_mb1;
-  bool rpc_extrapolation_mb2;
-  
-  bool dt_extrapolation_mb1;
-  bool dt_extrapolation_mb2;
-  
-  int count_muon = 0;
-	
-  float delta_dtSegm_In;
-  float delta_dtSegm_Out;
-	
-  
-  TH1F *h_Zmumu_Mass = new TH1F("Z boson mass", "Z boson mass", 160, 80, 120);
-  
-  // distance
-  TH1F *h_dist_DT_MB1_muon = new TH1F("Distance DT MB1 segment from muon", "Distance DT MB1 segment from muon", 100, 0, 10);
-  TH1F *h_dist_DT_MB2_muon = new TH1F("Distance DT MB2 segment from muon", "Distance DT MB2 segment from muon", 100, 0, 10);
-  
-  TH1F *h_dist_MB1_layer_1 = new TH1F("Distance on MB1 layer 1", "Distance on MB1 layer 1", 100, 0, 10);
-  TH1F *h_dist_MB1_layer_2 = new TH1F("Distance on MB1 layer 2", "Distance on MB1 layer 2", 100, 0, 10);
-  
-  TH1F *h_dist_MB2_layer_1 = new TH1F("Distance on MB2 layer 1", "Distance on MB2 layer 1", 100, 0, 10);
-  TH1F *h_dist_MB2_layer_2 = new TH1F("Distance on MB2 layer 2", "Distance on MB2 layer 2", 100, 0, 10);
-  // distance	
-  
-  // muon efficiency
-  TEfficiency* h_eff_pt_station_1 = new TEfficiency("Efficiency vs p_{T} on station 1", "Efficiency vs p_{T}; p_{T}; #epsilon", 40,0.,80.);
-  TEfficiency* h_eff_pt_station_2 = new TEfficiency("Efficiency vs p_{T} on station 2", "Efficiency vs p_{T}; p_{T}; #epsilon", 40,0.,80.);
-  
-  TH1F *h_num_pt_station_1 = new TH1F("Numerator for p_{T} on station 1", "Numerator for p_{T} on station 1", 40,0.,80.);
-  TH1F *h_num_pt_station_2 = new TH1F("Numerator for p_{T} on station 2", "Numerator for p_{T} on station 2", 40,0.,80.);
-  
-  TH1F *h_den_pt_station_1 = new TH1F("Denominator for p_{T} on station 1", "Denominator for p_{T} on station 1", 40,0.,80.);
-  TH1F *h_den_pt_station_2 = new TH1F("Denominator for p_{T} on station 2", "Denominator for p_{T} on station 2", 40,0.,80.);
-  
-  
-  TEfficiency* h_eff_eta_station_1 = new TEfficiency("Efficiency vs #eta on station 1","Efficiency vs #eta;#eta;#epsilon",20,-1.2,1.2);
-  TEfficiency* h_eff_eta_station_2 = new TEfficiency("Efficiency vs #eta on station 2","Efficiency vs #eta;#eta;#epsilon",20,-1.2,1.2);
+  // Analysis parameters
+  TString input_file_name  = "DTNtuple.root";
+  TString output_file_name = "prova.root";
 
-  TH1F *h_num_eta_station_1 = new TH1F("Numerator for #eta on station 1", "Numerator for #eta on station 1", 20, -1.2,1.2);
-  TH1F *h_num_eta_station_2 = new TH1F("Numerator for #eta on station 2", "Numerator for #eta on station 2", 20, -1.2,1.2);
-  
-  TH1F *h_den_eta_station_1 = new TH1F("Denominator for #eta on station 1", "Denominator for #eta on station 1", 20, -1.2,1.2);
-  TH1F *h_den_eta_station_2 = new TH1F("Denominator for #eta on station 2", "Denominator for #eta on station 2", 20, -1.2,1.2);
-  
-  
-  TEfficiency* h_eff_phi_station_1 = new TEfficiency("Efficiency vs #phi on station 1","Efficiency vs #phi;#phi;#epsilon", 25,-3.2,3.2);
-  TEfficiency* h_eff_phi_station_2 = new TEfficiency("Efficiency vs #phi on station 1","Efficiency vs #phi;#phi;#epsilon", 25,-3.2,3.2);
-  
-  TH1F *h_num_phi_station_1 = new TH1F("Numerator for #phi on station 1", "Numerator for #phi on station 1", 25,-3.2,3.2);
-  TH1F *h_num_phi_station_2 = new TH1F("Numerator for #phi on station 2", "Numerator for #phi on station 2", 25,-3.2,3.2);
-  
-  TH1F *h_den_phi_station_1 = new TH1F("Denominator for #phi on station 1", "Denominator for #phi on station 1", 25,-3.2,3.2);
-  TH1F *h_den_phi_station_2 = new TH1F("Denominator for #phi on station 2", "Denominator for #phi on station 2", 25,-3.2,3.2);
-  // muon efficiency	
-  
-  // Twin Mux
-  TH1F *h_BX_IN_MB1 = new TH1F("BX IN for MB1", "BX IN for MB1", 7, -3.5, 3.5);
-  TH1F *h_BX_OUT_MB1 = new TH1F("BX OUT for MB1", "BX OUT for MB1", 7, -3.5, 3.5);
-  TH1F *h_BX_IN_MB2 = new TH1F("BX IN for MB2", "BX IN for MB2", 7, -3.5, 3.5);
-  TH1F *h_BX_OUT_MB2 = new TH1F("BX OUT for MB2", "BX OUT for MB2", 7, -3.5, 3.5);
-  
-  TH1F *h_DeltaPhi_InOut_MB1 = new TH1F("#Delta#phi between TwinMux IN and DT Segment: MB1", "#Delta#phi between TwinMux IN and DT Segment: MB1", 80, -4, 4);
-  TH1F *h_DeltaPhi_InOut_MB2 = new TH1F("#Delta#phi between TwinMux IN and DT Segment: MB2", "#Delta#phi between TwinMux IN and DT Segment: MB2", 80, -4, 4);
-  // Twin Mux
-  
-  
+  Long64_t n_events = 999999999;
+
+  Float_t cluster_size_cut = 3.;
+  Float_t range_strips = 4.;
+
+  // Trigger and RECO muon cuts   	
+
+  Float_t min_TnP_mass = 50;
+  Float_t max_TnP_mass = 200;
+
+  TString trigger_filter_name = "hltL3crIsoL1sMu22L1f0L2f10QL3f24QL3trkIsoFiltered0p09";
+  Float_t muon_hlt_dR = 0.1;
+
+  Float_t min_pt_tag    = 26.;
+  Float_t min_pt_probe  = 20.;
+  Float_t max_eta_probe = 1.2; 
+
+  Float_t Dxy_cut = 0.2;
+  Float_t Dz_cut =  0.5;
+
+  Float_t N_hits_cut =   4; 
+  Float_t muchi2_cut = 10.;
+  Float_t npix_cut   =   1;
+  Float_t ntkr_cut   =   5;
+
+  Float_t tkr_iso_cut = 0.10;
+
   // Declaration of leaf types
   Int_t           runnumber;
   Int_t           lumiblock;
@@ -188,9 +83,9 @@ class RPC_studies {
 
   vector<TString> *hlt_path;
   vector<TString> *hlt_filter;
-  vector<TString> *hlt_filter_phi;
-  vector<TString> *hlt_filter_eta;
-  vector<TString> *hlt_filter_pt;
+  vector<float> *hlt_filter_phi;
+  vector<float> *hlt_filter_eta;
+  vector<float> *hlt_filter_pt;
 
 //    vector<short>   *digi_wheel;
 //    vector<short>   *digi_sector;
@@ -259,8 +154,8 @@ class RPC_studies {
   vector<short>   *ltTwinMuxIn_station;
   vector<short>   *ltTwinMuxIn_quality;
   vector<short>   *ltTwinMuxIn_bx;
-  vector<float>   *ltTwinMuxIn_phi;
-  vector<float>   *ltTwinMuxIn_phiB;
+  vector<int>     *ltTwinMuxIn_phi;
+  vector<int>     *ltTwinMuxIn_phiB;
   vector<short>   *ltTwinMuxIn_is2nd;
   vector<short>   *ltTwinMuxOut_wheel;
   vector<short>   *ltTwinMuxOut_sector;
@@ -268,8 +163,8 @@ class RPC_studies {
   vector<short>   *ltTwinMuxOut_quality;
   vector<short>   *ltTwinMuxOut_rpcbit;
   vector<short>   *ltTwinMuxOut_bx;
-  vector<float>   *ltTwinMuxOut_phi;
-  vector<float>   *ltTwinMuxOut_phiB;
+  vector<int>     *ltTwinMuxOut_phi;
+  vector<int>     *ltTwinMuxOut_phiB;
   vector<short>   *ltTwinMuxOut_is2nd;
 
 //    vector<short>   *ltTwinMux_thWheel;
@@ -360,7 +255,8 @@ class RPC_studies {
 //    Short_t         Ngmt;
 //    Short_t         Ngtalgo;
 //    Short_t         Ngttechtrig;
-  Short_t         Nhlt;
+  Short_t         NhltPaths;
+  Short_t         NhltFilters;
 //    Short_t         NrpcRecHits;
 //    vector<short>   *bmtfPt;
 //    vector<short>   *bmtfEta;
@@ -628,7 +524,8 @@ class RPC_studies {
 //    TBranch        *b_Ngmt;   //!
 //    TBranch        *b_Ngtalgo;   //!
 //    TBranch        *b_Ngttt;   //!
-   TBranch        *b_Nhlt;   //!
+   TBranch        *b_NhltFilters;   //!
+   TBranch        *b_NhltPaths;   //!   
 //    TBranch        *b_NrpcRecHits;   //!
 //    TBranch        *b_bmtfPt;   //!
 //    TBranch        *b_bmtfEta;   //!
@@ -708,35 +605,34 @@ class RPC_studies {
    TBranch        *b_DTextrapolatedOnRPCStripw;   //!
    TBranch        *b_NDTsegmentonRPC;   //!
 
-   RPC_studies(TTree *tree=0);
-   virtual ~RPC_studies();
+   combined_trigger_studies(TTree *tree=0);
+   virtual ~combined_trigger_studies();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
    virtual void     Loop(); 
     
-   muons_vector     Selection();
-   
-   virtual float    Mass(TLorentzVector, TLorentzVector);
-   virtual float	PhiConversion(float, int);
+   float PhiConversion(int, int);
+   std::vector<std::pair<int,int>> TnPSelection(Float_t, Float_t);
+   bool HasTrigger(const TLorentzVector &, Float_t);
+
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
 };
 
 #endif
 
-#ifdef RPC_studies_cxx
-RPC_studies::RPC_studies(TTree *tree) : fChain(0) 
+#ifdef combined_trigger_studies_cxx
+combined_trigger_studies::combined_trigger_studies(TTree *tree) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-//       TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/afs/cern.ch/work/f/ferrico/private/DT_update/CMSSW_9_0_0_pre4/src/UserCode/DTDPGAnalysis/test/DTNtuple_283830.root");
-     TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("../DTNtuple.root");
+     TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(input_file_name);
      
      if (!f || !f->IsOpen()) {
-       f = new TFile("../DTNtuple.root");
+       f = new TFile(input_file_name);
      }
      f->GetObject("DTTree",tree);
 
@@ -744,19 +640,19 @@ RPC_studies::RPC_studies(TTree *tree) : fChain(0)
    Init(tree);
 }
 
-RPC_studies::~RPC_studies()
+combined_trigger_studies::~combined_trigger_studies()
 {
-   if (!fChain) return;
-   delete fChain->GetCurrentFile();
+  if (!fChain) return;
+  delete fChain->GetCurrentFile();
 }
 
-Int_t RPC_studies::GetEntry(Long64_t entry)
+Int_t combined_trigger_studies::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t RPC_studies::LoadTree(Long64_t entry)
+Long64_t combined_trigger_studies::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -769,7 +665,7 @@ Long64_t RPC_studies::LoadTree(Long64_t entry)
    return centry;
 }
 
-void RPC_studies::Init(TTree *tree)
+void combined_trigger_studies::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -1153,6 +1049,23 @@ void RPC_studies::Init(TTree *tree)
    fChain->SetBranchAddress("Mu_z_mb2_mu", &Mu_z_mb2_mu, &b_Mu_z_mb2_mu);
    fChain->SetBranchAddress("Mu_phi_mb2_mu", &Mu_phi_mb2_mu, &b_Mu_phi_mb2_mu);
    fChain->SetBranchAddress("Mu_pseta_mb2_mu", &Mu_pseta_mb2_mu, &b_Mu_pseta_mb2_mu);
+   fChain->SetBranchAddress("TRKMu_x_MB1", &Mu_x_MB1, &b_Mu_x_MB1);
+   fChain->SetBranchAddress("TRKMu_y_MB1", &Mu_y_MB1, &b_Mu_y_MB1);
+   fChain->SetBranchAddress("TRKMu_wheel_MB1", &Mu_wheel_MB1, &b_Mu_wheel_MB1);
+   fChain->SetBranchAddress("TRKMu_sector_MB1", &Mu_sector_MB1, &b_Mu_sector_MB1);
+   fChain->SetBranchAddress("TRKMu_x_MB2", &Mu_x_MB2, &b_Mu_x_MB2);
+   fChain->SetBranchAddress("TRKMu_y_MB2", &Mu_y_MB2, &b_Mu_y_MB2);
+   fChain->SetBranchAddress("TRKMu_wheel_MB2", &Mu_wheel_MB2, &b_Mu_wheel_MB2);
+   fChain->SetBranchAddress("TRKMu_sector_MB2", &Mu_sector_MB2, &b_Mu_sector_MB2);
+   fChain->SetBranchAddress("TRKMu_x_MB3", &Mu_x_MB3, &b_Mu_x_MB3);
+   fChain->SetBranchAddress("TRKMu_y_MB3", &Mu_y_MB3, &b_Mu_y_MB3);
+   fChain->SetBranchAddress("TRKMu_wheel_MB3", &Mu_wheel_MB3, &b_Mu_wheel_MB3);
+   fChain->SetBranchAddress("TRKMu_sector_MB3", &Mu_sector_MB3, &b_Mu_sector_MB3);
+   fChain->SetBranchAddress("TRKMu_x_MB4", &Mu_x_MB4, &b_Mu_x_MB4);
+   fChain->SetBranchAddress("TRKMu_y_MB4", &Mu_y_MB4, &b_Mu_y_MB4);
+   fChain->SetBranchAddress("TRKMu_wheel_MB4", &Mu_wheel_MB4, &b_Mu_wheel_MB4);
+   fChain->SetBranchAddress("TRKMu_sector_MB4", &Mu_sector_MB4, &b_Mu_sector_MB4);
+   
 //    fChain->SetBranchAddress("gmt_bx", &gmt_bx, &b_gmt_bx);
 //    fChain->SetBranchAddress("gmt_phi", &gmt_phi, &b_gmt_phi);
 //    fChain->SetBranchAddress("gmt_eta", &gmt_eta, &b_gmt_eta);
@@ -1184,7 +1097,8 @@ void RPC_studies::Init(TTree *tree)
 //    fChain->SetBranchAddress("Ngmt", &Ngmt, &b_Ngmt);
 //    fChain->SetBranchAddress("Ngtalgo", &Ngtalgo, &b_Ngtalgo);
 //    fChain->SetBranchAddress("Ngttechtrig", &Ngttechtrig, &b_Ngttt);
-   fChain->SetBranchAddress("Nhlt", &Nhlt, &b_Nhlt);
+   fChain->SetBranchAddress("NhltFilters", &NhltFilters, &b_NhltFilters);
+   fChain->SetBranchAddress("NhltPaths",   &NhltPaths,   &b_NhltPaths);
 //    fChain->SetBranchAddress("NrpcRecHits", &NrpcRecHits, &b_NrpcRecHits);
 //    fChain->SetBranchAddress("bmtfPt", &bmtfPt, &b_bmtfPt);
 //    fChain->SetBranchAddress("bmtfEta", &bmtfEta, &b_bmtfEta);
@@ -1266,7 +1180,7 @@ void RPC_studies::Init(TTree *tree)
    Notify();
 }
 
-Bool_t RPC_studies::Notify()
+Bool_t combined_trigger_studies::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -1277,18 +1191,18 @@ Bool_t RPC_studies::Notify()
    return kTRUE;
 }
 
-void RPC_studies::Show(Long64_t entry)
+void combined_trigger_studies::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-Int_t RPC_studies::Cut(Long64_t entry)
+Int_t combined_trigger_studies::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
 }
-#endif // #ifdef RPC_studies_cxx
+#endif // #ifdef combined_trigger_studies_cxx
