@@ -254,7 +254,8 @@ TTreeGenerator::TTreeGenerator(const edm::ParameterSet& pset):
   igmt         = 0;
   igtalgo      = 0; // legacy
   igttt        = 0; // legacy
-  ihlt         = 0;
+  ihltFilters  = 0;
+  ihltPaths    = 0;
 }
 
 void TTreeGenerator::beginLuminosityBlock(edm::LuminosityBlock const& lumiBlock,
@@ -587,7 +588,7 @@ void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollect
 	new ((*segm4D_hitsExpWire)[idtsegments]) TVectorF(dummyfloat);
       }
       const GeomDet* geomDet = theTrackingGeometry->idToDet(segment4D->geographicalId());
-      const GlobalVector point_glb = geomDet->toGlobal(segment4D->localDirection());
+      const GlobalPoint point_glb = geomDet->toGlobal(segment4D->localPosition());
       segm4D_cosx.push_back(point_glb.x());
       segm4D_cosy.push_back(point_glb.y());
       segm4D_cosz.push_back(point_glb.z());
@@ -1033,10 +1034,10 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
       {
 	for ( const reco::MuonChamberMatch & match : nmuon->matches() )
 	  {
-	    
+
 	    if (match.edgeX < -5. &&
 		match.edgeY < -5. &&
-		match.id.det() == DetId::Muon && 
+		match.id.det() == DetId::Muon &&
 		match.id.subdetId() == MuonSubdetId::DT)
 	      {
 
@@ -1060,7 +1061,6 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
 	      }
 	  }
       }
-
 	    
     TRKMu_x_MB1.push_back(x[0]);
     TRKMu_y_MB1.push_back(y[0]);
@@ -1186,21 +1186,24 @@ void TTreeGenerator::fill_hlt_variables(const edm::Event &e,
   const edm::TriggerNames TrigNames_ = e.triggerNames(*hltresults);
   const int ntrigs = hltresults->size();
 
+  ihltPaths = 0; 
+
   for (int itr=0; itr<ntrigs; itr++){
     TString trigName=TrigNames_.triggerName(itr);
     if (hltresults->accept(itr)) {
       hlt_path.push_back(trigName);
+      ++ihltPaths;      
     }
   }
 
   const trigger::size_type nFilters(hltevent->sizeFilters());
 
-  ihlt = 0; 
+  ihltFilters = 0; 
 
   for (trigger::size_type iFilter=0; iFilter!=nFilters; ++iFilter)
     {
 
-      if(ihlt >= hltSize_) break;
+      if(ihltFilters >= hltSize_) break;
 
       std::string filterTag = hltevent->filterTag(iFilter).encode();
 
@@ -1219,7 +1222,7 @@ void TTreeGenerator::fill_hlt_variables(const edm::Event &e,
 	      trigger::size_type objKey = objectKeys.at(iKey);
 	      const trigger::TriggerObject& triggerObj(triggerObjects[objKey]);
 
-	      ihlt++;
+	      ++ihltFilters;
 
 	      float trigObjPt = triggerObj.pt();
 	      float trigObjEta = triggerObj.eta();
@@ -1507,7 +1510,7 @@ void TTreeGenerator::beginJob()
 
   //HLT
   tree_->Branch("hlt_path",&hlt_path,32000,-1);
-  tree_->Branch("hlt_filter",&hlt_path,32000,-1);
+  tree_->Branch("hlt_filter",&hlt_filter,32000,-1);
 
   tree_->Branch("hlt_filter_phi",&hlt_filter_phi);
   tree_->Branch("hlt_filter_eta",&hlt_filter_eta);
@@ -1698,7 +1701,8 @@ void TTreeGenerator::beginJob()
   // tree_->Branch("Ngmt",&igmt,"Ngmt/S");
   //tree_->Branch("Ngtalgo",&igtalgo,"Ngtalgo/S");
   // tree_->Branch("Ngttechtrig",&igttt,"Ngttt/S");
-  tree_->Branch("Nhlt",&ihlt,"Nhlt/S");
+  tree_->Branch("NhltPaths",&ihltPaths,"Nhlt/S");
+  tree_->Branch("NhltFilters",&ihltFilters,"Nhlt/S");
   tree_->Branch("NrpcRecHits",&irpcrechits,"NrpcRecHits/S");
   
   // Bmtf
