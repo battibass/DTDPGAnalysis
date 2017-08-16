@@ -117,8 +117,8 @@ std::vector<short> ltTwinMuxIn_sector;
 std::vector<short> ltTwinMuxIn_station;
 std::vector<short> ltTwinMuxIn_quality;
 std::vector<short> ltTwinMuxIn_bx;
-std::vector<float> ltTwinMuxIn_phi;
-std::vector<float> ltTwinMuxIn_phiB;
+std::vector<int> ltTwinMuxIn_phi;
+std::vector<int> ltTwinMuxIn_phiB;
 std::vector<short> ltTwinMuxIn_is2nd;
 
 std::vector<short> ltTwinMuxOut_wheel;
@@ -127,8 +127,8 @@ std::vector<short> ltTwinMuxOut_station;
 std::vector<short> ltTwinMuxOut_quality;
 std::vector<short> ltTwinMuxOut_rpcbit;
 std::vector<short> ltTwinMuxOut_bx;
-std::vector<float> ltTwinMuxOut_phi;
-std::vector<float> ltTwinMuxOut_phiB;
+std::vector<int> ltTwinMuxOut_phi;
+std::vector<int> ltTwinMuxOut_phiB;
 std::vector<short> ltTwinMuxOut_is2nd;
 
 // std::vector<short> ltTwinMux_thBx;
