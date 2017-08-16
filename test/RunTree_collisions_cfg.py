@@ -32,7 +32,7 @@ process.load("RecoMuon.TrackingTools.MuonServiceProxy_cff")
 
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")  #DB v2, at least since GR_E_V42
 
-process.GlobalTag.globaltag = '80X_dataRun2_2016LegacyRepro_v3'#90X_dataRun2_Express_v1'
+process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v9'#90X_dataRun2_Express_v1'
 
 # for the emulator
 process.load("L1TriggerConfig.DTTPGConfigProducers.L1DTTPGConfigFromDB_cff")
@@ -88,7 +88,7 @@ process.DTMuonSelection = cms.EDFilter("DTMuonSelection",
                                  etaMin = cms.double(-1.25),
                                  etaMax = cms.double(1.25),
                                  ptMin = cms.double(0.),#3.),
-                                 tightness = cms.int32(1) # 0 = loose (e.g. unstable collisions, minimum bias, requires a DT segment)
+                                 tightness = cms.int32(2) # 0 = loose (e.g. unstable collisions, minimum bias, requires a DT segment)
                                                           # 1 = medium (e.g. cosmics, requires a stand alone muon)
                                                           # 2 = tight (good collisions, requires a global muon)
 )
