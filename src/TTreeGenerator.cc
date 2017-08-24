@@ -225,16 +225,6 @@ TTreeGenerator::TTreeGenerator(const edm::ParameterSet& pset):
   OnlyBarrel_ = pset.getParameter<bool>("OnlyBarrel");
   dtExtrapolation_ = pset.getParameter<bool>("dtExtrapolation");
 
-// unpacking Rpc RecHit
-// UnpackingRpcRecHitLabel_  = pset.getParameter<edm::InputTag>("UnpackingRpcRecHitLabel");
-//   UnpackingRpcRecHitToken_  = consumes<RPCRecHitCollection>(edm::InputTag(UnpackingRpcRecHitLabel_));
-
-//***  Moved to begin of function, needed for stablishing the digi collection to be used
-//  runOnRaw_        = pset.getParameter<bool>("runOnRaw");
-//  runOnSimulation_ = pset.getParameter<bool>("runOnSimulation");
-//  runOnSimulationWithDigis_ = pset.getParameter<bool>("runOnSimulationWithDigis");
-//  ****
-
   localDTmuons_    = pset.getUntrackedParameter<bool>("localDTmuons","False");
 
   AnaTrackGlobalMu_= pset.getUntrackedParameter<bool>("AnaTrackGlobalMu","True");  // set to False when problems with tracks of global muons
@@ -286,7 +276,6 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   if(!localDTmuons_)  
   {
     edm::Handle<reco::BeamSpot> recoBeamSpotHandle;
-    //event.getByLabel(beamSpotTag_ ,recoBeamSpotHandle);  // Doesn't work after 75X
     event.getByToken(beamSpotToken_ ,recoBeamSpotHandle);
     beamspot = *recoBeamSpotHandle; 
     
@@ -295,7 +284,6 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
                           // The vector<LumiScalers> but not the <LumiScalersCollection> 
     {                      
        edm::Handle<LumiScalersCollection> lumiScalers;
-       //event.getByLabel(scalersSource_, lumiScalers);  // Doesn't work after 75X
        event.getByToken(scalersSourceToken_, lumiScalers);
        LumiScalersCollection::const_iterator lumiIt = lumiScalers->begin();
        lumiperblock = lumiIt->instantLumi();
@@ -330,8 +318,6 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   if(runOnRaw_) hasPhiTwinMuxIn=event.getByToken(dtTrigTwinMuxInToken_,localTriggerTwinMuxIn);
 
   edm::Handle<L1MuDTChambThContainer> localTriggerTwinMux_Th;
-  // bool hasThetaTwinMux=false;
-  // if(runOnRaw_) hasThetaTwinMux=event.getByToken(dtTrigTwinMux_ThToken_,localTriggerTwinMux_Th);
 
   edm::Handle<reco::MuonCollection> MuList;
   if(!localDTmuons_) event.getByToken(staMuToken_,MuList);
@@ -341,10 +327,6 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
 
   edm::Handle< L1GlobalTriggerReadoutRecord > gtrc; // legacy
   if(runOnRaw_ && !localDTmuons_) event.getByToken(gtToken_, gtrc); // legacy
-
-  // edm::ESHandle<L1GtTriggerMenu> menuRcd;
-  // context.get<L1GtTriggerMenuRcd>().get(menuRcd) ;
-  // const L1GtTriggerMenu* menu = menuRcd.product();
 
   edm::Handle<edm::TriggerResults>  hltresults;
   if(!localDTmuons_) event.getByToken(triggerResultToken_, hltresults); 
@@ -418,42 +400,18 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
     }
   }
 
-  //DIGIS
-  // if(runOnRaw_ && !runOnSimulation_) fill_digi_variables(dtdigis);
-  // else   // Added to cope with simulation including Digis
-  //  if(runOnSimulation_ && runOnSimulationWithDigis_) fill_digi_variablesSim(dtdigisSim);
-
-
   //DT SEGMENTS
-  // fill_dtsegments_variables(dtsegments4D, dtGeom_);
   fill_dtsegments_variables(dtsegments4D, dtGeom_, rpcGeom_, context);
-
-  //CSC SEGMENTS
-  // if(!localDTmuons_) fill_cscsegments_variables(cscsegments);
 
   //TwinMux
   if(runOnRaw_ && hasPhiTwinMuxIn) fill_twinmuxin_variables(localTriggerTwinMuxIn);
   if(runOnRaw_ && hasPhiTwinMuxOut) fill_twinmuxout_variables(localTriggerTwinMuxOut);
-  // if(runOnRaw_ && hasThetaTwinMux) fill_twinmuxth_variables(localTriggerTwinMux_Th);
 
   //MUONS
   if(!localDTmuons_) fill_muons_variables(MuList);
-
-  //GMT
-  // if(!localDTmuons_) fill_gmt_variables(gmt); // legacy
-
-  //GT
-  // if(runOnRaw_ && !localDTmuons_) fill_gt_variables(gtrc,menu); // legacy
     
   //HLT
   if(!localDTmuons_) fill_hlt_variables(event,hltresults,hltevent);
-
-  // RPC
-  // if(!localDTmuons_) fill_rpc_variables(event,rpcHits);
-  
-  // analyzeBMTF(event);
-  
-  // analyzeRPCunpacking(event);
   
   analyzeUnpackingRpcRecHit(event, rpcGeom_);  
   
@@ -462,49 +420,6 @@ void TTreeGenerator::analyze(const edm::Event& event, const edm::EventSetup& con
   return;
 }
 
-// void TTreeGenerator::fill_digi_variables(edm::Handle<DTDigiCollection> dtdigis)
-// {
-
-//   idigis = 0;
-//   for (DTDigiCollection::DigiRangeIterator dtLayerIdIt = dtdigis->begin(); dtLayerIdIt!=dtdigis->end(); dtLayerIdIt++){
-//     for (DTDigiCollection::const_iterator digiIt = ((*dtLayerIdIt).second).first;digiIt!=((*dtLayerIdIt).second).second; ++digiIt){
-//       if(idigis >= digisSize_) return;
-//       digi_wheel.push_back((*dtLayerIdIt).first.wheel());
-//       digi_sector.push_back((*dtLayerIdIt).first.sector());
-//       digi_station.push_back((*dtLayerIdIt).first.station());
-//       digi_sl.push_back((*dtLayerIdIt).first.superLayer());
-//       digi_layer.push_back((*dtLayerIdIt).first.layer());
-//       digi_wire.push_back((*digiIt).wire());
-//       digi_time.push_back((*digiIt).time());
-//       idigis++;
-//     }
-//   }
-//   return;
-// }
-
-
-// void TTreeGenerator::fill_digi_variablesSim(edm::Handle<DTDigiSimLinkCollection> dtdigisSim)
-// {
-
-//   idigis = 0;
-//   for (DTDigiSimLinkCollection::DigiRangeIterator dtLayerIdIt = dtdigisSim->begin(); dtLayerIdIt!=dtdigisSim->end(); dtLayerIdIt++){
-//     for (DTDigiSimLinkCollection::const_iterator digiIt = ((*dtLayerIdIt).second).first;digiIt!=((*dtLayerIdIt).second).second; ++digiIt){
-//       if(idigis >= digisSize_) return;
-//       digi_wheel.push_back((*dtLayerIdIt).first.wheel());
-//       digi_sector.push_back((*dtLayerIdIt).first.sector());
-//       digi_station.push_back((*dtLayerIdIt).first.station());
-//       digi_sl.push_back((*dtLayerIdIt).first.superLayer());
-//       digi_layer.push_back((*dtLayerIdIt).first.layer());
-//       digi_wire.push_back((*digiIt).wire());
-//       digi_time.push_back((*digiIt).time());
-//       idigis++;
-//     }
-//   }
-//   return;
-// }
-
-
-// void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, const DTGeometry* dtGeom_)
 void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, 
 					       const DTGeometry* dtGeom_, const RPCGeometry* rpcGeom_, 
 					       const edm::EventSetup& iSetup)
@@ -626,141 +541,227 @@ void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollect
       }
       idtsegments++;
       
-	if(dtExtrapolation_){
-	
-		DT_segment_onRPC = 0;
-		if(segments4D->size()>10){ //Too many segments in this event we are not doing the extrapolation
-			std::cout<<"-----------------------------Too many segments in this event we are not doing the extrapolation"<<std::endl;
+	if(dtExtrapolation_) {
+	  
+		short nDTsegmentOnRPC = 0;
+		
+		if(segments4D->size()>10) {
+		  //Too many segments in this event we are not doing the extrapolation
+		  std::cout << "-----------------------------"
+			    << "Too many segments in this event"
+			    << " we are not doing the extrapolation"<<std::endl;
+		  
+		  DT_segments_onRPC.push_back(nDTsegmentOnRPC);
+		  
+		  new ((*DT_extrapolated_OnRPC_BX)[idtsegments])       TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Loc_x)[idtsegments])    TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Loc_y)[idtsegments])    TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Loc_z)[idtsegments])    TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Loc_eta)[idtsegments])  TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Loc_phi)[idtsegments])  TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Glob_x)[idtsegments])   TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Glob_y)[idtsegments])   TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Glob_z)[idtsegments])   TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Glob_eta)[idtsegments]) TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Glob_phi)[idtsegments]) TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Region)[idtsegments])   TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Sector)[idtsegments])   TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Station)[idtsegments])  TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Layer)[idtsegments])    TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Roll)[idtsegments])     TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Ring)[idtsegments])     TVectorF(dummyfloat);
+		  new ((*DT_extrapolated_OnRPC_Stripw)[idtsegments])   TVectorF(dummyfloat);
 		}
-		else{   
-			std::map<DTChamberId,int> DTSegmentCounter;
-			DTChamberId DTId = segment4D->chamberId();
+		else {
+		  
+		  std::map<DTChamberId,int> DTSegmentCounter;
+		  DTChamberId DTId = segment4D->chamberId();
+
+		  TVectorF DTextrapolatedOnRPC_BX(2);
+		  TVectorF DTextrapolatedOnRPC_Loc_x(2);
+		  TVectorF DTextrapolatedOnRPC_Loc_y(2);
+		  TVectorF DTextrapolatedOnRPC_Loc_z(2);
+		  TVectorF DTextrapolatedOnRPC_Loc_eta(2);
+		  TVectorF DTextrapolatedOnRPC_Loc_phi(2);
+		  TVectorF DTextrapolatedOnRPC_Glob_x(2);
+		  TVectorF DTextrapolatedOnRPC_Glob_y(2);
+		  TVectorF DTextrapolatedOnRPC_Glob_z(2);
+		  TVectorF DTextrapolatedOnRPC_Glob_eta(2);
+		  TVectorF DTextrapolatedOnRPC_Glob_phi(2);
+		  TVectorF DTextrapolatedOnRPC_Region(2);
+		  TVectorF DTextrapolatedOnRPC_Sector(2);
+		  TVectorF DTextrapolatedOnRPC_Station(2);
+		  TVectorF DTextrapolatedOnRPC_Layer(2);
+		  TVectorF DTextrapolatedOnRPC_Roll(2);
+		  TVectorF DTextrapolatedOnRPC_Ring(2);
+		  TVectorF DTextrapolatedOnRPC_Stripw(2);
+
+		  // 			if(DTSegmentCounter[DTId]!=1 || DTId.station()==4){
+		  // 				std::cout<<"DT \t \t More than one segment in this chamber, or we are in Station 4"<<std::endl;
+		  // 				continue;
+		  // 			}
 			
-// 			if(DTSegmentCounter[DTId]!=1 || DTId.station()==4){
-// 				std::cout<<"DT \t \t More than one segment in this chamber, or we are in Station 4"<<std::endl;
-// 				continue;
-// 			}
+		  int dtWheel = DTId.wheel(); //maybe unuseful
+		  int dtStation = DTId.station();
+		  int dtSector = DTId.sector();      
+		  
+		  LocalPoint segmentPosition= segment4D->localPosition();
+		  LocalVector segmentDirection=segment4D->localDirection();
+		  
+		  const GeomDet* gdet=dtGeom_->idToDet(segment4D->geographicalId());
+		  const BoundPlane & DTSurface = gdet->surface();	 
+		  
+		  if(segment4D->dimension()!=4) continue;  //check if the dimension of the segment is 4
+		  if((segment4D->phiSegment()->recHits()).size()<7) continue; //check if there are 2 phi superlayers fired (at least 7hits)
+		  if((segment4D->zSegment()->recHits()).size()<4) continue; //check if there are at least 4 hits for the Z projection
+		  
+		  float Xo=segmentPosition.x();
+		  float Yo=segmentPosition.y();
+		  float Zo=segmentPosition.z();
+		  float dx=segmentDirection.x();
+		  float dy=segmentDirection.y();
+		  float dz=segmentDirection.z();
+		  
+		  ObjectMap* TheObject = ObjectMap::GetInstance(iSetup);
+		  DTStationIndex theindex(0,dtWheel,dtSector,dtStation);
+		  std::set<RPCDetId> rollsForThisDT = TheObject->GetInstance(iSetup)->GetRolls(theindex);
+		  assert(rollsForThisDT.size()>=1);		
+		  
+		  for (std::set<RPCDetId>::iterator iteraRoll = rollsForThisDT.begin();iteraRoll != rollsForThisDT.end(); iteraRoll++){
+		    const RPCRoll* rollasociated = rpcGeom_->roll(*iteraRoll);
+		    RPCDetId rpcId = rollasociated->id();
+		    const BoundPlane & RPCSurface = rollasociated->surface(); 
+		    
+		    RPCGeomServ rpcsrv(rpcId);
+		    std::string nameRoll = rpcsrv.name();
+		    
+		    GlobalPoint CenterPointRollGlobal = RPCSurface.toGlobal(LocalPoint(0,0,0));
+		    
+		    LocalPoint CenterRollinDTFrame = DTSurface.toLocal(CenterPointRollGlobal);
+		    
+		    float D=CenterRollinDTFrame.z();
+		    
+		    float X=Xo+dx*D/dz;
+		    float Y=Yo+dy*D/dz;
+		    float Z=D;
+		    
+		    const RectangularStripTopology* top_= dynamic_cast<const RectangularStripTopology*> (&(rollasociated->topology()));
+		    LocalPoint xmin = top_->localPosition(0.);
+		    LocalPoint xmax = top_->localPosition((float)rollasociated->nstrips());
+		    float rsize = fabs( xmax.x()-xmin.x() );
+		    float stripl = top_->stripLength();
+		    
+		    float stripw = top_->pitch();
+		    
+		    float extrapolatedDistance = sqrt((X-Xo)*(X-Xo)+(Y-Yo)*(Y-Yo)+(Z-Zo)*(Z-Zo));
+		    
+		    if(extrapolatedDistance<=MaxD){ 
+		      GlobalPoint GlobalPointExtrapolated = DTSurface.toGlobal(LocalPoint(X,Y,Z));
+		      LocalPoint PointExtrapolatedRPCFrame = RPCSurface.toLocal(GlobalPointExtrapolated);
+		      
+		      if(fabs(PointExtrapolatedRPCFrame.z()) < 1. && 
+			 fabs(PointExtrapolatedRPCFrame.x()) < rsize*eyr && 
+			 fabs(PointExtrapolatedRPCFrame.y()) < stripl*eyr){
 			
-			int dtWheel = DTId.wheel(); //maybe unuseful
-			int dtStation = DTId.station();
-			int dtSector = DTId.sector();      
-			
-			LocalPoint segmentPosition= segment4D->localPosition();
 			LocalVector segmentDirection=segment4D->localDirection();
-			
-			const GeomDet* gdet=dtGeom_->idToDet(segment4D->geographicalId());
-			const BoundPlane & DTSurface = gdet->surface();	 
-			
-			if(segment4D->dimension()!=4) continue;  //check if the dimension of the segment is 4
-			if((segment4D->phiSegment()->recHits()).size()<7) continue; //check if there are 2 phi superlayers fired (at least 7hits)
-			if((segment4D->zSegment()->recHits()).size()<4) continue; //check if there are at least 4 hits for the Z projection
-
-			float Xo=segmentPosition.x();
-			float Yo=segmentPosition.y();
-			float Zo=segmentPosition.z();
 			float dx=segmentDirection.x();
-			float dy=segmentDirection.y();
 			float dz=segmentDirection.z();
-
-			ObjectMap* TheObject = ObjectMap::GetInstance(iSetup);
-			DTStationIndex theindex(0,dtWheel,dtSector,dtStation);
-			std::set<RPCDetId> rollsForThisDT = TheObject->GetInstance(iSetup)->GetRolls(theindex);
-			assert(rollsForThisDT.size()>=1);		
-
-			for (std::set<RPCDetId>::iterator iteraRoll = rollsForThisDT.begin();iteraRoll != rollsForThisDT.end(); iteraRoll++){
-				const RPCRoll* rollasociated = rpcGeom_->roll(*iteraRoll);
-				RPCDetId rpcId = rollasociated->id();
-				const BoundPlane & RPCSurface = rollasociated->surface(); 
-
-				RPCGeomServ rpcsrv(rpcId);
-				std::string nameRoll = rpcsrv.name();
-
-				GlobalPoint CenterPointRollGlobal = RPCSurface.toGlobal(LocalPoint(0,0,0));
- 
-				LocalPoint CenterRollinDTFrame = DTSurface.toLocal(CenterPointRollGlobal);
- 
-				float D=CenterRollinDTFrame.z();
- 
-				float X=Xo+dx*D/dz;
-				float Y=Yo+dy*D/dz;
-				float Z=D;
- 
-				const RectangularStripTopology* top_= dynamic_cast<const RectangularStripTopology*> (&(rollasociated->topology()));
-				LocalPoint xmin = top_->localPosition(0.);
-				LocalPoint xmax = top_->localPosition((float)rollasociated->nstrips());
-				float rsize = fabs( xmax.x()-xmin.x() );
-				float stripl = top_->stripLength();
- 
-				float stripw = top_->pitch();
- 
-				float extrapolatedDistance = sqrt((X-Xo)*(X-Xo)+(Y-Yo)*(Y-Yo)+(Z-Zo)*(Z-Zo));
+			float cosal = dx/sqrt(dx*dx+dz*dz);
+			float angle = acos(cosal)*180/3.1415926;
 			
-				if(extrapolatedDistance<=MaxD){ 
-				  GlobalPoint GlobalPointExtrapolated = DTSurface.toGlobal(LocalPoint(X,Y,Z));
-				  LocalPoint PointExtrapolatedRPCFrame = RPCSurface.toLocal(GlobalPointExtrapolated);
-				
-				  if(fabs(PointExtrapolatedRPCFrame.z()) < 1. && 
-				     fabs(PointExtrapolatedRPCFrame.x()) < rsize*eyr && 
-				     fabs(PointExtrapolatedRPCFrame.y()) < stripl*eyr){
+			RPCRecHit RPCPoint(rpcId,0,LocalPoint(PointExtrapolatedRPCFrame.x(),PointExtrapolatedRPCFrame.y(),angle));
+			
+			float dt_loc_x = PointExtrapolatedRPCFrame.x();
+			float dt_loc_y = PointExtrapolatedRPCFrame.y();
+			float dt_loc_z = PointExtrapolatedRPCFrame.z();
+			float dt_loc_phi = PointExtrapolatedRPCFrame.phi();
+			float dt_loc_eta = PointExtrapolatedRPCFrame.eta();
+			float dt_glob_x = GlobalPointExtrapolated.x();
+			float dt_glob_y = GlobalPointExtrapolated.y();
+			float dt_glob_z = GlobalPointExtrapolated.z();
+			float dt_glob_eta = GlobalPointExtrapolated.eta();
+			float dt_glob_phi = GlobalPointExtrapolated.phi();
+			
+			DTextrapolatedOnRPC_BX(nDTsegmentOnRPC) = RPCPoint.BunchX();
+			
+			DTextrapolatedOnRPC_Loc_x(nDTsegmentOnRPC) = dt_loc_x;
+			DTextrapolatedOnRPC_Loc_y(nDTsegmentOnRPC) = dt_loc_y;
+			DTextrapolatedOnRPC_Loc_z(nDTsegmentOnRPC) = dt_loc_z;
+			DTextrapolatedOnRPC_Loc_eta(nDTsegmentOnRPC) = dt_loc_eta;
+			DTextrapolatedOnRPC_Loc_phi(nDTsegmentOnRPC) = dt_loc_phi;
+			
+			DTextrapolatedOnRPC_Glob_x(nDTsegmentOnRPC) = dt_glob_x;
+			DTextrapolatedOnRPC_Glob_y(nDTsegmentOnRPC) = dt_glob_y;
+			DTextrapolatedOnRPC_Glob_z(nDTsegmentOnRPC) = dt_glob_z;
+			DTextrapolatedOnRPC_Glob_eta(nDTsegmentOnRPC) = dt_glob_eta;
+			DTextrapolatedOnRPC_Glob_phi(nDTsegmentOnRPC) = dt_glob_phi;
+			
+			DTextrapolatedOnRPC_Region(nDTsegmentOnRPC) = rpcId.region();
+			DTextrapolatedOnRPC_Sector(nDTsegmentOnRPC) = rpcId.sector();
+			DTextrapolatedOnRPC_Station(nDTsegmentOnRPC) = rpcId.station();
+			DTextrapolatedOnRPC_Layer(nDTsegmentOnRPC) = rpcId.layer();
+			DTextrapolatedOnRPC_Roll(nDTsegmentOnRPC) = rpcId.roll();
+			DTextrapolatedOnRPC_Ring(nDTsegmentOnRPC) = rpcId.ring();
+			DTextrapolatedOnRPC_Stripw(nDTsegmentOnRPC) = stripw;
 
-				    LocalVector segmentDirection=segment4D->localDirection();
-				    float dx=segmentDirection.x();
-				    float dz=segmentDirection.z();
-				    float cosal = dx/sqrt(dx*dx+dz*dz);
-				    float angle = acos(cosal)*180/3.1415926;
-				    			    
-				    RPCRecHit RPCPoint(rpcId,0,LocalPoint(PointExtrapolatedRPCFrame.x(),PointExtrapolatedRPCFrame.y(),angle));
+			nDTsegmentOnRPC++;
 
-				    float dt_loc_x = PointExtrapolatedRPCFrame.x();
-				    float dt_loc_y = PointExtrapolatedRPCFrame.y();
-				    float dt_loc_z = PointExtrapolatedRPCFrame.z();
-				    float dt_loc_phi = PointExtrapolatedRPCFrame.phi();
-				    float dt_loc_eta = PointExtrapolatedRPCFrame.eta();
-				    float dt_glob_x = GlobalPointExtrapolated.x();
-				    float dt_glob_y = GlobalPointExtrapolated.y();
-				    float dt_glob_z = GlobalPointExtrapolated.z();
-				    float dt_glob_eta = GlobalPointExtrapolated.eta();
-				    float dt_glob_phi = GlobalPointExtrapolated.phi();
-				    
-				    DT_extrapolated_OnRPC_BX.push_back(RPCPoint.BunchX());
-				    
-				    DT_extrapolated_OnRPC_Loc_x.push_back(dt_loc_x);
-				    DT_extrapolated_OnRPC_Loc_y.push_back(dt_loc_y);
-				    DT_extrapolated_OnRPC_Loc_z.push_back(dt_loc_z);
-				    DT_extrapolated_OnRPC_Loc_eta.push_back(dt_loc_eta);
-				    DT_extrapolated_OnRPC_Loc_phi.push_back(dt_loc_phi);
-				    
-				    DT_extrapolated_OnRPC_Glob_x.push_back(dt_glob_x);
-				    DT_extrapolated_OnRPC_Glob_y.push_back(dt_glob_y);
-				    DT_extrapolated_OnRPC_Glob_z.push_back(dt_glob_z);
-				    DT_extrapolated_OnRPC_Glob_eta.push_back(dt_glob_eta);
-				    DT_extrapolated_OnRPC_Glob_phi.push_back(dt_glob_phi);
-				    
-				    DT_extrapolated_OnRPC_Region.push_back(rpcId.region());
-				    DT_extrapolated_OnRPC_Sector.push_back(rpcId.sector());
-				    DT_extrapolated_OnRPC_Station.push_back(rpcId.station());
-				    DT_extrapolated_OnRPC_Layer.push_back(rpcId.layer());
-				    DT_extrapolated_OnRPC_Roll.push_back(rpcId.roll());
-				    DT_extrapolated_OnRPC_Ring.push_back(rpcId.ring());
-				    DT_extrapolated_OnRPC_Stripw.push_back(stripw);
-				    		
-				    DT_segment_onRPC++;
-			  
-				  }else {
-/*			    if(debug)*/ //std::cout<<"DT \t \t \t \t No the prediction is outside of this roll"<<std::endl;
-				  }//Condition for the right match
-				}else{
-/*			  if(debug) */ //std::cout<<"DT \t \t \t No, Exrtrapolation too long!, canceled"<<std::endl;
-				}//Distance is too big
+		      }else {
+		      }//Condition for the right match
+		    }else{
+		    }//Distance is too big
 
-			}//loop over all the rolls asociated  
-	} //else: segments4D->size()<10
-  } // if: do you want extrapolation ?
-  
-  } // for on segment4D
- } // for on chambIt
+		  }//loop over all the rolls asociated
+
+		  DTextrapolatedOnRPC_BX.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Loc_x.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Loc_y.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Loc_z.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Loc_eta.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Loc_phi.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Glob_x.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Glob_y.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Glob_z.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Glob_eta.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Glob_phi.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Region.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Sector.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Station.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Layer.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Roll.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Ring.ResizeTo(nDTsegmentOnRPC);
+		  DTextrapolatedOnRPC_Stripw.ResizeTo(nDTsegmentOnRPC);
+
+		  DT_segments_onRPC.push_back(nDTsegmentOnRPC);
+		  
+		  new ((*DT_extrapolated_OnRPC_BX)[idtsegments])       TVectorF(DTextrapolatedOnRPC_BX);
+		  new ((*DT_extrapolated_OnRPC_Loc_x)[idtsegments])    TVectorF(DTextrapolatedOnRPC_Loc_x);
+		  new ((*DT_extrapolated_OnRPC_Loc_y)[idtsegments])    TVectorF(DTextrapolatedOnRPC_Loc_y);
+		  new ((*DT_extrapolated_OnRPC_Loc_z)[idtsegments])    TVectorF(DTextrapolatedOnRPC_Loc_x);
+		  new ((*DT_extrapolated_OnRPC_Loc_eta)[idtsegments])  TVectorF(DTextrapolatedOnRPC_Loc_eta);
+		  new ((*DT_extrapolated_OnRPC_Loc_phi)[idtsegments])  TVectorF(DTextrapolatedOnRPC_Loc_phi);
+		  new ((*DT_extrapolated_OnRPC_Glob_x)[idtsegments])   TVectorF(DTextrapolatedOnRPC_Glob_x);
+		  new ((*DT_extrapolated_OnRPC_Glob_y)[idtsegments])   TVectorF(DTextrapolatedOnRPC_Glob_y);
+		  new ((*DT_extrapolated_OnRPC_Glob_z)[idtsegments])   TVectorF(DTextrapolatedOnRPC_Glob_z);
+		  new ((*DT_extrapolated_OnRPC_Glob_eta)[idtsegments]) TVectorF(DTextrapolatedOnRPC_Glob_eta);
+		  new ((*DT_extrapolated_OnRPC_Glob_phi)[idtsegments]) TVectorF(DTextrapolatedOnRPC_Glob_phi);
+		  new ((*DT_extrapolated_OnRPC_Region)[idtsegments])   TVectorF(DTextrapolatedOnRPC_Region);
+		  new ((*DT_extrapolated_OnRPC_Sector)[idtsegments])   TVectorF(DTextrapolatedOnRPC_Sector);
+		  new ((*DT_extrapolated_OnRPC_Station)[idtsegments])  TVectorF(DTextrapolatedOnRPC_Station);
+		  new ((*DT_extrapolated_OnRPC_Layer)[idtsegments])    TVectorF(DTextrapolatedOnRPC_Layer);
+		  new ((*DT_extrapolated_OnRPC_Roll)[idtsegments])     TVectorF(DTextrapolatedOnRPC_Roll);
+		  new ((*DT_extrapolated_OnRPC_Ring)[idtsegments])     TVectorFd(DTextrapolatedOnRPC_Ring);
+		  new ((*DT_extrapolated_OnRPC_Stripw)[idtsegments])   TVectorF(DTextrapolatedOnRPC_Stripw);
+		  
+
+		} //else: segments4D->size()<10
+	} // if: do you want extrapolation ?
+	
+    } // for on segment4D
+  } // for on chambIt
  
   return;
+  
 } // close the function
 
 void TTreeGenerator::fill_dtphi_info(const DTChamberRecSegment2D* phiSeg, const GeomDet* chamb)
@@ -849,29 +850,6 @@ void TTreeGenerator::fill_dtz_info(const DTSLRecSegment2D* zSeg,  const GeomDet*
   return;
 }
 
-// void TTreeGenerator::fill_cscsegments_variables(edm::Handle<CSCSegmentCollection> cscsegments)
-// {
-//   icscsegments = 0;
-//   for (CSCSegmentCollection::id_iterator chambIt = cscsegments->id_begin(); chambIt != cscsegments->id_end(); ++chambIt){
-//     CSCSegmentCollection::range  range = cscsegments->get(*chambIt);
-//     for (CSCSegmentCollection::const_iterator cscsegment = range.first; cscsegment!=range.second; ++cscsegment){
-//       if(icscsegments >= cscsegmentsSize_) return;
-//       cscsegm_ring.push_back((*chambIt).ring());
-//       cscsegm_chamber.push_back((*chambIt).chamber());
-//       cscsegm_station.push_back((*chambIt).station());
-//       const GeomDet* geomDet = theTrackingGeometry->idToDet(cscsegment->geographicalId());
-//       const GlobalVector point_glb = geomDet->toGlobal(cscsegment->localDirection());
-//       cscsegm_cosx.push_back(point_glb.x());
-//       cscsegm_cosy.push_back(point_glb.y());
-//       cscsegm_cosz.push_back(point_glb.y());
-//       cscsegm_normchi2.push_back(cscsegment->chi2()/cscsegment->degreesOfFreedom());
-//       cscsegm_nRecHits.push_back(cscsegment->nRecHits());
-//       icscsegments++;
-//     }
-//   }
-//   return;
-// }
-
 void TTreeGenerator::fill_twinmuxout_variables(edm::Handle<L1MuDTChambPhContainer> localTriggerTwinMuxOut)
 {
   idtltTwinMuxOut = 0;
@@ -916,26 +894,6 @@ void TTreeGenerator::fill_twinmuxin_variables(edm::Handle<L1MuDTChambPhContainer
   }
   return;
 }
-
-// void TTreeGenerator::fill_twinmuxth_variables(edm::Handle<L1MuDTChambThContainer> localTriggerTwinMux_Th)
-// {
-//   idtltTwinMux_th = 0;
-//   const std::vector<L1MuDTChambThDigi>*  thTrigs = localTriggerTwinMux_Th->getContainer();
-//   for(std::vector<L1MuDTChambThDigi>::const_iterator ith = thTrigs->begin(); ith != thTrigs->end() ; ++ith){
-//     if(idtltTwinMux_th >= dtltTwinMuxThSize_) break;
-//     ltTwinMux_thWheel.push_back(ith->whNum());
-//     ltTwinMux_thSector.push_back(ith->scNum() + 1); // DTTF[0-11] -> DT[1-12] Sector Numbering
-//     ltTwinMux_thStation.push_back(ith->stNum());
-//     ltTwinMux_thBx.push_back(ith->bxNum());
-//     unsigned short int thcode=0;
-//     for (int pos=0; pos<7; pos++)
-//       if (ith->code(pos))
-//       thcode=thcode | (0x1<<pos);
-//     ltTwinMux_thHits.push_back(thcode);
-//     idtltTwinMux_th++;
-//   }
-//   return;
-// }
 
 void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuList)
 {
@@ -1118,67 +1076,6 @@ void TTreeGenerator::fill_muons_variables(edm::Handle<reco::MuonCollection> MuLi
   return;
 }
 
-// void TTreeGenerator::fill_gmt_variables(const edm::Handle<l1t::MuonBxCollection> & gmt)
-// {
-//   igmt = 0;
-
-//   for (int ibx = gmt->getFirstBX(); ibx <= gmt->getLastBX(); ++ibx) 
-//     {
-//       for (auto l1MuIt = gmt->begin(ibx); l1MuIt != gmt->end(ibx); ++l1MuIt)
-// 	{
-
-// 	  gmt_bx.push_back(ibx);
-// 	  gmt_phi.push_back(l1MuIt->phi());
-// 	  gmt_eta.push_back(l1MuIt->eta());
-// 	  gmt_pt.push_back(l1MuIt->pt());
-// 	  gmt_qual.push_back(l1MuIt->hwQual());
-// 	  gmt_tf_idx.push_back(l1MuIt->tfMuonIndex());
-// 	  gmt_charge.push_back(l1MuIt->hwChargeValid() ? l1MuIt->charge() : 0);
-// 	  igmt++;
-// 	}
-//     }
-  
-//   return;
-// }
-
-// void TTreeGenerator::fill_gt_variables(edm::Handle<L1GlobalTriggerReadoutRecord> gtrr, const L1GtTriggerMenu* menu) // CB FIXME speedup // legacy
-// {
-//   igtalgo = 0;
-//   igttt   = 0;
-//   const AlgorithmMap algoMap = menu->gtAlgorithmMap();
-//   const AlgorithmMap ttMap   = menu->gtTechnicalTriggerMap();
-//   for(int ibx=0; ibx<5; ibx++) {
-//     DecisionWord gtDecisionWord = gtrr->decisionWord(ibx-2);
-//     if (!gtDecisionWord.empty()) {
-//       CItAlgo algoMapIt  = algoMap.begin();
-//       CItAlgo algoMapEnd = algoMap.end();
-//       for(; algoMapIt!=algoMapEnd; ++algoMapIt) {
-// 	if( menu->gtAlgorithmResult((*algoMapIt).first, gtDecisionWord) ) {
-// 	  // gt_algo_bit.push_back(TString((*algoMapIt).first));
-// 	  gt_algo_bit.push_back((algoMapIt->second).algoBitNumber());
-// 	  gt_algo_bx.push_back(ibx-2);
-// 	  igtalgo++;
-// 	}
-//       }
-//     }
-//     TechnicalTriggerWord gtTTWord = gtrr->technicalTriggerWord(ibx-2);
-//     if (!gtTTWord.empty()) {
-//       CItAlgo ttMapIt  = ttMap.begin();
-//       CItAlgo ttMapEnd = ttMap.end();
-//       for(; ttMapIt!=ttMapEnd; ++ttMapIt) {
-// 	int bitNumber = (ttMapIt->second).algoBitNumber();
-// 	if (gtTTWord.at(bitNumber)) {
-// 	  //	  gt_tt_bit.push_back(TString(ttMapIt->first));
-// 	  gt_tt_bit.push_back((ttMapIt->second).algoBitNumber());
-// 	  gt_tt_bx.push_back(ibx-2);
-// 	  igttt++;
-// 	}
-//       }
-//     }
-//   }
-//   return;
-// }
-
 void TTreeGenerator::fill_hlt_variables(const edm::Event &e, 
 					edm::Handle<edm::TriggerResults> hltresults,
 					edm::Handle<trigger::TriggerEvent> hltevent)
@@ -1239,36 +1136,6 @@ void TTreeGenerator::fill_hlt_variables(const edm::Event &e,
   return;
 
 }
-
-// void TTreeGenerator::fill_rpc_variables(const edm::Event &e, edm::Handle<RPCRecHitCollection> rpcrechits){
-//   RPCRecHitCollection::const_iterator recHit;
-//   irpcrechits=0;
-//   for(recHit = rpcrechits->begin(); recHit != rpcrechits->end(); recHit++){ 
-//     int cls = recHit->clusterSize();
-//     int firststrip = recHit->firstClusterStrip();
-//     int bx = recHit->BunchX();
-//     RPCDetId rpcId = recHit->rpcId();
-//     int region = rpcId.region();
-//     int stat = rpcId.station();
-//     int sect = rpcId.sector();
-//     int layer = rpcId.layer();
-//     int subsector = rpcId.subsector();
-//     int roll = rpcId.roll();
-//     int ring = rpcId.ring();
-//     rpc_region.push_back(region);
-//     rpc_clusterSize.push_back(cls);
-//     rpc_strip.push_back(firststrip);
-//     rpc_bx.push_back(bx);
-//     rpc_station.push_back(stat);
-//     rpc_sector.push_back(sect);
-//     rpc_layer.push_back(layer);
-//     rpc_subsector.push_back(subsector);
-//     rpc_roll.push_back(roll);
-//     rpc_ring.push_back(ring);
-//     irpcrechits++;
-//   }
-//   return;
-// }
 
 void TTreeGenerator::analyzeUnpackingRpcRecHit(const edm::Event& event, const RPCGeometry* rpcGeom_)
 {
@@ -1334,145 +1201,6 @@ void TTreeGenerator::analyzeUnpackingRpcRecHit(const edm::Event& event, const RP
   return;
 }
 
-// void TTreeGenerator::analyzeRPCunpacking(const edm::Event& event)
-// {
-// 	edm::Handle<MuonDigiCollection<RPCDetId,RPCDigi> > rpc;
-// 	event.getByToken(rpcToken_, rpc);
-// 	auto chamber = rpc->begin();
-// 	auto chend  = rpc->end();
-// 	irpcdigi_TwinMux=0;
-// 	for( ; chamber != chend; ++chamber ) {
-	
-// 		if(OnlyBarrel_ && (*chamber).first.region() != 0) continue;
-
-//    		auto digi = (*chamber).second.first;
-// 	    auto dend = (*chamber).second.second;
-// 		for( ; digi != dend; ++digi ) {
-// 			RpcDigi_TwinMux_bx.push_back(digi->bx());
-// 			RpcDigi_TwinMux_strip.push_back(digi->strip());
-// 		}
-// 		RpcDigi_TwinMux_region.push_back((*chamber).first.region()); 
-// 		RpcDigi_TwinMux_ring.push_back((*chamber).first.ring());
-// 		RpcDigi_TwinMux_station.push_back((*chamber).first.station());
-// 		RpcDigi_TwinMux_layer.push_back((*chamber).first.layer());
-// 		RpcDigi_TwinMux_sector.push_back((*chamber).first.sector());
-// 		RpcDigi_TwinMux_subsector.push_back((*chamber).first.subsector()); 
-// 		RpcDigi_TwinMux_roll.push_back((*chamber).first.roll());
-// 		RpcDigi_TwinMux_trIndex.push_back((*chamber).first.trIndex());
-// 		RpcDigi_TwinMux_det.push_back((*chamber).first.det());
-// 		RpcDigi_TwinMux_subdetId.push_back((*chamber).first.subdetId()); 
-// 		RpcDigi_TwinMux_rawId.push_back((*chamber).first.rawId()); 
-// 		irpcdigi_TwinMux++;
-// 	}  
-
-// }
-
-// void TTreeGenerator::analyzeBMTF(const edm::Event& event)
-// {
-// ///Output of BMTF
-//   int ctr = 0;
-//   edm::Handle<l1t::RegionalMuonCandBxCollection> mycoll;
-//   event.getByToken(bmtfOutputTag_,mycoll);
-
-//   if (mycoll.isValid()) {
-//         int firstbx = (*mycoll).getFirstBX();
-//         int lastbx  = (*mycoll).getLastBX() + 1;
-//         for(int i=firstbx; i<lastbx; i++){
-//   				for (auto mu = (*mycoll).begin(i); mu != (*mycoll).end(i); ++mu) {
-// 		    	  ctr++;
-// 			      Bmtf_Pt.push_back(mu->hwPt()*0.5);
-// 			      Bmtf_Eta.push_back(mu->hwEta()*0.010875);
-// 			      Bmtf_FineBit.push_back(mu->hwHF());
-// 			      Bmtf_Phi.push_back(mu->hwPhi());
-// 			      //2*mu->hwPhi()*TMath::Pi()/576;
-// 			      int phi = 0;
-// 			      phi = mu->processor()*48 + mu->hwPhi();
-// 			      phi += 576 - 24;
-// 			      phi = phi % 576;
-// 			      Bmtf_GlobalPhi.push_back(phi);
-// 		    	  Bmtf_qual.push_back(mu->hwQual());
-// 	    		  Bmtf_ch.push_back(mu->hwSign());
-//     			  Bmtf_bx.push_back(i);
-// 			      Bmtf_processor.push_back(mu->processor());
-// 			      std::map<int, int>  trAdd;
-// 	    		  trAdd = mu->trackAddress();
-// 		    	  int wheel = pow(-1,trAdd[0]) * trAdd[1];
-//     			  Bmtf_wh.push_back(wheel);
-// 			      Bmtf_trAddress.push_back(trAdd[2]);
-//     			  Bmtf_trAddress.push_back(trAdd[3]);
-// 	    		  Bmtf_trAddress.push_back(trAdd[4]);
-// 			      Bmtf_trAddress.push_back(trAdd[5]);
-//     			} // for mu
-// 		        Bmtf_Size = ctr;
-//  	 } // for i
-//   } //if
-//   else 
-//       edm::LogInfo("L1Prompt") << "can't find L1MuMBTrackContainer";
-      
-
-//   edm::Handle<L1MuDTChambPhContainer> bmtfPhInputs;  
-//   event.getByToken(bmtfPhInputTag_, bmtfPhInputs);
-  
-//   if(!(bmtfPhInputs.isValid())) std::cout<<"no  ok"<<std::endl;
-  
-//    L1MuDTChambPhContainer::Phi_Container const *PhContainer = bmtfPhInputs->getContainer();
-
-//    Bmtf_phSize = PhContainer->size();
-//    int iphtr=0;
-//    for( L1MuDTChambPhContainer::Phi_Container::const_iterator DTPhDigiItr =  PhContainer->begin() ;
-//        DTPhDigiItr != PhContainer->end(); ++DTPhDigiItr ){
-// 		      Bmtf_phBx.push_back     (  DTPhDigiItr->bxNum() );
-//     		  Bmtf_phTs2Tag.push_back     ( DTPhDigiItr->Ts2Tag() );
-// 		      Bmtf_phWh.push_back     (  DTPhDigiItr->whNum() );
-// 	    	  Bmtf_phSe.push_back     (  DTPhDigiItr->scNum() );
-// 	    	  Bmtf_phSt.push_back     (  DTPhDigiItr->stNum() );
-//     		  Bmtf_phAng.push_back    (  DTPhDigiItr->phi()   );
-// 		      Bmtf_phBandAng.push_back(  DTPhDigiItr->phiB()  );
-//     		  Bmtf_phCode.push_back   (  DTPhDigiItr->code()  );
-// 		      iphtr++;
-//     }
-
-
-
-//   edm::Handle<L1MuDTChambThContainer > bmtfThInputs;
-//   event.getByToken(bmtfThInputTag_, bmtfThInputs); 
-  
-//    L1MuDTChambThContainer::The_Container const *ThContainer = bmtfThInputs->getContainer();
-   
-//    if(!(bmtfThInputs.isValid())) std::cout<<"no  ok"<<std::endl;
-
-//    int ithtr=0;
-//    Bmtf_thSize = ThContainer->size();
-
-//    for( L1MuDTChambThContainer::The_Container::const_iterator
-// 	 DTThDigiItr =  ThContainer->begin() ;
-//        DTThDigiItr != ThContainer->end() ;
-//        ++DTThDigiItr )
-//      {
-
-//       Bmtf_thBx.push_back( DTThDigiItr->bxNum()  );
-//       Bmtf_thWh.push_back( DTThDigiItr->whNum() );
-//       Bmtf_thSe.push_back( DTThDigiItr->scNum() );
-//       Bmtf_thSt.push_back( DTThDigiItr->stNum() );
-
-//       ostringstream  ss1, ss2; 
-//       ss1.clear(); ss2.clear();
-//       ss1<<"9"; ss2<<"9";
-
-//       for(int j=0; j<7; j++){
-//         ss1<<DTThDigiItr->position(j);
-//         ss2<<DTThDigiItr->code(j) ;
-//       }
-//       Bmtf_thTheta.push_back(stoi(ss1.str())) ;
-//       Bmtf_thCode.push_back(stoi(ss2.str()));
-
-//       ithtr++;
-
-//     }     
-
-  
-// }
-
 void TTreeGenerator::beginJob()
 {
   outFile = new TFile(outFile_.c_str(), "RECREATE", "");
@@ -1515,15 +1243,6 @@ void TTreeGenerator::beginJob()
   tree_->Branch("hlt_filter_phi",&hlt_filter_phi);
   tree_->Branch("hlt_filter_eta",&hlt_filter_eta);
   tree_->Branch("hlt_filter_pt", &hlt_filter_pt);
-
-  //digi variables
-  // tree_->Branch("digi_wheel",&digi_wheel);
-  // tree_->Branch("digi_sector",&digi_sector);
-  // tree_->Branch("digi_station",&digi_station);
-  // tree_->Branch("digi_sl",&digi_sl);
-  // tree_->Branch("digi_layer",&digi_layer);
-  // tree_->Branch("digi_wire",&digi_wire);
-  // tree_->Branch("digi_time",&digi_time);
 
   //DT segment variables
   tree_->Branch("dtsegm4D_wheel",&segm4D_wheel);
@@ -1573,19 +1292,28 @@ void TTreeGenerator::beginJob()
   tree_->Branch("dtsegm4D_z_hitsLayer",&segm4D_zHits_Layer,2048000,0);
   tree_->Branch("dtsegm4D_z_hitsTime",&segm4D_zHits_Time,2048000,0);
   tree_->Branch("dtsegm4D_z_hitsTimeCali",&segm4D_zHits_TimeCali,2048000,0);
+  
+  tree_->Branch("NDTsegmentonRPC", &DT_segment_onRPC);
 
-  //CSC segment variables
-  // tree_->Branch("cscsegm_ring",&cscsegm_ring);
-  // tree_->Branch("cscsegm_chamber",&cscsegm_chamber);
-  // tree_->Branch("cscsegm_station",&cscsegm_station);
-  // tree_->Branch("cscsegm_cosx",&cscsegm_cosx);
-  // tree_->Branch("cscsegm_cosy",&cscsegm_cosy);
-  // tree_->Branch("cscsegm_cosz",&cscsegm_cosz);
-  // tree_->Branch("cscsegm_phi",&cscsegm_phi);
-  // tree_->Branch("cscsegm_eta",&cscsegm_eta);
-  // tree_->Branch("cscsegm_normchisq",&cscsegm_normchi2);
-  // tree_->Branch("cscsegm_nRecHits",&cscsegm_nRecHits);
- 
+  tree_->Branch("DTextrapolatedOnRPCBX", &DT_extrapolated_OnRPC_BX,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCLocX", &DT_extrapolated_OnRPC_Loc_x,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCLocY", &DT_extrapolated_OnRPC_Loc_y,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCLocZ", &DT_extrapolated_OnRPC_Loc_z,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCLocEta", &DT_extrapolated_OnRPC_Loc_eta,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCLocPhi", &DT_extrapolated_OnRPC_Loc_phi,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCGlobX", &DT_extrapolated_OnRPC_Glob_x,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCGlobY", &DT_extrapolated_OnRPC_Glob_y,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCGlobZ", &DT_extrapolated_OnRPC_Glob_z,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCGlobEta", &DT_extrapolated_OnRPC_Glob_eta,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCGlobPhi", &DT_extrapolated_OnRPC_Glob_phi,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCRegion", &DT_extrapolated_OnRPC_Region,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCSector", &DT_extrapolated_OnRPC_Sector,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCStation", &DT_extrapolated_OnRPC_Station,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCLayer", &DT_extrapolated_OnRPC_Layer,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCRoll", &DT_extrapolated_OnRPC_Roll,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCRing", &DT_extrapolated_OnRPC_Ring,2048000,0);
+  tree_->Branch("DTextrapolatedOnRPCStripw", &DT_extrapolated_OnRPC_Stripw,2048000,0);
+
   //Twinmux variables
   tree_->Branch("ltTwinMuxIn_wheel",&ltTwinMuxIn_wheel);
   tree_->Branch("ltTwinMuxIn_sector",&ltTwinMuxIn_sector);
@@ -1605,12 +1333,6 @@ void TTreeGenerator::beginJob()
   tree_->Branch("ltTwinMuxOut_phi",&ltTwinMuxOut_phi);
   tree_->Branch("ltTwinMuxOut_phiB",&ltTwinMuxOut_phiB);
   tree_->Branch("ltTwinMuxOut_is2nd",&ltTwinMuxOut_is2nd);
-
-  // tree_->Branch("ltTwinMux_thWheel",&ltTwinMux_thWheel);
-  // tree_->Branch("ltTwinMux_thSector",&ltTwinMux_thSector);
-  // tree_->Branch("ltTwinMux_thStation",&ltTwinMux_thStation);
-  // tree_->Branch("ltTwinMux_thBx",&ltTwinMux_thBx);
-  // tree_->Branch("ltTwinMux_thHits",&ltTwinMux_thHits);
 
   //muon variables
   tree_->Branch("Mu_isMuGlobal",&STAMu_isMuGlobal);
@@ -1662,97 +1384,15 @@ void TTreeGenerator::beginJob()
   tree_->Branch("TRKMu_y_MB4",&TRKMu_y_MB4);
   tree_->Branch("TRKMu_sector_MB4",&TRKMu_sector_MB4);
   tree_->Branch("TRKMu_wheel_MB4",&TRKMu_wheel_MB4);
-
-  //GMT
-  // tree_->Branch("gmt_bx",&gmt_bx);
-  // tree_->Branch("gmt_phi",&gmt_phi);
-  // tree_->Branch("gmt_eta",&gmt_eta);
-  // tree_->Branch("gmt_pt",&gmt_pt);
-  // tree_->Branch("gmt_charge",&gmt_charge);
-  // tree_->Branch("gmt_qual",&gmt_qual);
-  // tree_->Branch("gmt_tf_idx",&gmt_tf_idx);
-
-  //GT  // legacy
-  // tree_->Branch("gt_algo_bit",&gt_algo_bit);
-  // tree_->Branch("gt_algo_bx",&gt_algo_bx);
-  // tree_->Branch("gt_tt_bit",&gt_tt_bit);
-  // tree_->Branch("gt_tt_bx",&gt_tt_bx);
-
-  //RPC
-  // tree_->Branch(  "rpc_region",&rpc_region);			   
-  // tree_->Branch(  "rpc_clusterSize",&rpc_clusterSize);		   
-  // tree_->Branch(  "rpc_strip",&rpc_strip);			   
-  // tree_->Branch(  "rpc_bx",&rpc_bx);			   
-  // tree_->Branch(  "rpc_station",&rpc_station);		   
-  // tree_->Branch(  "rpc_sector",&rpc_sector);		   
-  // tree_->Branch(  "rpc_layer",&rpc_layer);			   
-  // tree_->Branch(  "rpc_subsector",&rpc_subsector);		   
-  // tree_->Branch(  "rpc_roll",&rpc_roll);			   
-  // tree_->Branch(  "rpc_ring",&rpc_ring);                     
   
   //counters
-  // tree_->Branch("Ndigis",&idigis,"Ndigis/S");
   tree_->Branch("Ndtsegments",&idtsegments,"Ndtsegments/S");
-  // tree_->Branch("Ncscsegments",&icscsegments,"Ncscsegments/S");
   tree_->Branch("NdtltTwinMuxOut",&idtltTwinMuxOut,"NdtltTwinMuxOut/S");
-  // tree_->Branch("NdtltTwinMux_th",&idtltTwinMux_th,"NdtltTwinMux_th/S");
   tree_->Branch("NdtltTwinMuxIn",&idtltTwinMuxIn,"NdtltTwinMuxIn/S");
   tree_->Branch("Nmuons",&imuons,"Nmuons/S");
-  // tree_->Branch("Ngmt",&igmt,"Ngmt/S");
-  //tree_->Branch("Ngtalgo",&igtalgo,"Ngtalgo/S");
-  // tree_->Branch("Ngttechtrig",&igttt,"Ngttt/S");
   tree_->Branch("NhltPaths",&ihltPaths,"Nhlt/S");
   tree_->Branch("NhltFilters",&ihltFilters,"Nhlt/S");
   tree_->Branch("NrpcRecHits",&irpcrechits,"NrpcRecHits/S");
-  
-  // Bmtf
-  // tree_->Branch("bmtfPt", &Bmtf_Pt);
-  // tree_->Branch("bmtfEta", &Bmtf_Eta);
-  // tree_->Branch("bmtfPhi", &Bmtf_Phi);
-  // tree_->Branch("bmtfGlobalPhi", &Bmtf_GlobalPhi);
-  // tree_->Branch("bmftFineBit", &Bmtf_FineBit);
-  // tree_->Branch("bmtfqual", &Bmtf_qual);
-  // tree_->Branch("bmtfch", &Bmtf_ch);
-  // tree_->Branch("bmtfbx", &Bmtf_bx);
-  // tree_->Branch("bmtfprocessor", &Bmtf_processor);
-  // tree_->Branch("bmtfwh", &Bmtf_wh);
-  // tree_->Branch("bmtftrAddress", &Bmtf_trAddress);
-  // tree_->Branch("bmtfSize", &Bmtf_Size);
-   
-  // tree_->Branch("bmtfPhSize", &Bmtf_phSize);
-  // tree_->Branch("bmtfPhBx", &Bmtf_phBx);
-  // tree_->Branch("bmtfPhWh", &Bmtf_phWh);
-  // tree_->Branch("bmtfPhSe", &Bmtf_phSe);
-  // tree_->Branch("bmtfPhSt", &Bmtf_phSt);
-  // tree_->Branch("bmtfPhAng", &Bmtf_phAng);
-  // tree_->Branch("bmtfPhBandAng", &Bmtf_phBandAng);
-  // tree_->Branch("bmtfPhCode", &Bmtf_phCode);
-  // tree_->Branch("bmtfPhTs2Tag", &Bmtf_phTs2Tag);
-  
-  // tree_->Branch("bmtfThSize", &Bmtf_thSize);
-  // tree_->Branch("bmtfThBx", &Bmtf_thBx);
-  // tree_->Branch("bmtfThWh", &Bmtf_thWh);
-  // tree_->Branch("bmtfThSe", &Bmtf_thSe);
-  // tree_->Branch("bmtfThSt", &Bmtf_thSt);
-  // tree_->Branch("bmtfThTheta", &Bmtf_thTheta);
-  // tree_->Branch("bmtfThCode", &Bmtf_thCode);
-  
-
-  // Unpacking RPC
-  // tree_->Branch("NirpcdigiTwinMux", &irpcdigi_TwinMux);
-  // tree_->Branch("RpcDigiTwinMuxBx", &RpcDigi_TwinMux_bx);
-  // tree_->Branch("RpcDigiTwinMuxStrip", &RpcDigi_TwinMux_strip);
-  // tree_->Branch("RpcDigiTwinMuxRegion", &RpcDigi_TwinMux_region);
-  // tree_->Branch("RpcDigiTwinMuxRing", &RpcDigi_TwinMux_ring);
-  // tree_->Branch("RpcDigiTwinMuxStation", &RpcDigi_TwinMux_station);
-  // tree_->Branch("RpcDigiTwinMuxLayer", &RpcDigi_TwinMux_layer);
-  // tree_->Branch("RpcDigiTwinMuxSector", &RpcDigi_TwinMux_sector);
-  // tree_->Branch("RpcDigiTwinMuxSubSector", &RpcDigi_TwinMux_subsector);
-  // tree_->Branch("RpcDigiTwinMuxRoll", &RpcDigi_TwinMux_roll);
-  // tree_->Branch("RpcDigiTwinMuxTrIndex", &RpcDigi_TwinMux_trIndex);
-  // tree_->Branch("RpcDigiTwinMuxDet", &RpcDigi_TwinMux_det);
-  // tree_->Branch("RpcDigiTwinMuxSubdetId", &RpcDigi_TwinMux_subdetId);
-  // tree_->Branch("RpcDigiTwinMuxRawId", &RpcDigi_TwinMux_rawId);
   
   //Unpacking RPC RecHit
   tree_->Branch("NirpcrechitsTwinMux", &irpcrechits_TwinMux);
@@ -1776,26 +1416,6 @@ void TTreeGenerator::beginJob()
   tree_->Branch("RpcRechitTwinMuxGlobZ", &RpcRechit_TwinMux_Glob_z);
   tree_->Branch("RpcRechitTwinMuxGlobEta", &RpcRechit_TwinMux_Glob_eta);
   tree_->Branch("RpcRechitTwinMuxGlobPhi", &RpcRechit_TwinMux_Glob_phi);
-  
-  tree_->Branch("DTextrapolatedOnRPCBX", &DT_extrapolated_OnRPC_BX);
-  tree_->Branch("DTextrapolatedOnRPCLocX", &DT_extrapolated_OnRPC_Loc_x);
-  tree_->Branch("DTextrapolatedOnRPCLocY", &DT_extrapolated_OnRPC_Loc_y);
-  tree_->Branch("DTextrapolatedOnRPCLocZ", &DT_extrapolated_OnRPC_Loc_z);
-  tree_->Branch("DTextrapolatedOnRPCLocEta", &DT_extrapolated_OnRPC_Loc_eta);
-  tree_->Branch("DTextrapolatedOnRPCLocPhi", &DT_extrapolated_OnRPC_Loc_phi);
-  tree_->Branch("DTextrapolatedOnRPCGlobX", &DT_extrapolated_OnRPC_Glob_x);
-  tree_->Branch("DTextrapolatedOnRPCGlobY", &DT_extrapolated_OnRPC_Glob_y);
-  tree_->Branch("DTextrapolatedOnRPCGlobZ", &DT_extrapolated_OnRPC_Glob_z);
-  tree_->Branch("DTextrapolatedOnRPCGlobEta", &DT_extrapolated_OnRPC_Glob_eta);
-  tree_->Branch("DTextrapolatedOnRPCGlobPhi", &DT_extrapolated_OnRPC_Glob_phi);
-  tree_->Branch("DTextrapolatedOnRPCRegion", &DT_extrapolated_OnRPC_Region);
-  tree_->Branch("DTextrapolatedOnRPCSector", &DT_extrapolated_OnRPC_Sector);
-  tree_->Branch("DTextrapolatedOnRPCStation", &DT_extrapolated_OnRPC_Station);
-  tree_->Branch("DTextrapolatedOnRPCLayer", &DT_extrapolated_OnRPC_Layer);
-  tree_->Branch("DTextrapolatedOnRPCRoll", &DT_extrapolated_OnRPC_Roll);
-  tree_->Branch("DTextrapolatedOnRPCRing", &DT_extrapolated_OnRPC_Ring);
-  tree_->Branch("DTextrapolatedOnRPCStripw", &DT_extrapolated_OnRPC_Stripw);
-  tree_->Branch("NDTsegmentonRPC", &DT_segment_onRPC);
   
   return;
 }
@@ -2132,6 +1752,25 @@ void TTreeGenerator::initialize_Tree_variables()
   segm4D_zHits_Layer  = new TClonesArray("TVectorF",dtsegmentsSize_);
   segm4D_zHits_Time   = new TClonesArray("TVectorF",dtsegmentsSize_);
   segm4D_zHits_TimeCali   = new TClonesArray("TVectorF",dtsegmentsSize_);
+
+  DT_extrapolated_OnRPC_BX       = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Loc_x    = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Loc_y    = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Loc_z    = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Loc_eta  = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Loc_phi  = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Glob_x   = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Glob_y   = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Glob_z   = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Glob_eta = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Glob_phi = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Region   = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Sector   = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Station  = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Layer    = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Roll     = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Ring     = new TClonesArray("TVectorF",dtsegmentsSize_);
+  DT_extrapolated_OnRPC_Stripw   = new TClonesArray("TVectorF",dtsegmentsSize_);
 
   return;
 }

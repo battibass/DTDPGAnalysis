@@ -36,8 +36,6 @@ public:
   explicit TTreeGenerator(const edm::ParameterSet&);
   ~TTreeGenerator() {};
 
-  //PCRecHitCollection* thePoints(){return _ThePoints;}
-
 private:
 
   virtual void beginJob() ;
@@ -52,27 +50,22 @@ private:
   void initialize_Tree_variables();
   inline void clear_Arrays();
 
-  // void fill_digi_variables(edm::Handle<DTDigiCollection> dtdigis);
-  // void fill_digi_variablesSim(edm::Handle< DTDigiSimLinkCollection> dtdigisSim);
-  // void fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, const DTGeometry* dtGeom_);
   void fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollection> segments4D, 
 				 const DTGeometry* dtGeom_, const RPCGeometry* rpcGeom_, 
 				 const edm::EventSetup& iSetup);
-  // void fill_cscsegments_variables(edm::Handle<CSCSegmentCollection> cscsegments);
+
   void fill_twinmuxout_variables(edm::Handle<L1MuDTChambPhContainer> localTriggerTwinMuxOut);
   void fill_twinmuxin_variables(edm::Handle<L1MuDTChambPhContainer> localTriggerTwinMuxIn);
-  // void fill_twinmuxth_variables(edm::Handle<L1MuDTChambThContainer> localTriggerTwinMux_Th);
+
   void fill_muons_variables(edm::Handle<reco::MuonCollection> MuList);
-  // void fill_gmt_variables(const edm::Handle<l1t::MuonBxCollection> & gmt);
-  // void fill_gt_variables(edm::Handle<L1GlobalTriggerReadoutRecord> gtrr, const L1GtTriggerMenu* menu);
+
   void fill_hlt_variables(const edm::Event& e, 
 			  edm::Handle<edm::TriggerResults> hltresults,
 			  edm::Handle<trigger::TriggerEvent> hltevent);
-  // void fill_rpc_variables(const edm::Event &e, edm::Handle<RPCRecHitCollection> rpcrechits);
+
   void fill_dtphi_info(const DTChamberRecSegment2D* phiSeg,const GeomDet* geomDet);
   void fill_dtz_info(const DTSLRecSegment2D* zSeg, const GeomDet* geomDet);
-  // void analyzeBMTF(const edm::Event& e);
-  // void analyzeRPCunpacking(const edm::Event& e);
+
   void analyzeUnpackingRpcRecHit(const edm::Event& e, const RPCGeometry* rpcGeom_);
   void extrapolate_DTsegment_onRPC(edm::Handle<DTRecSegment4DCollection> segments4D, 
 				   const DTGeometry* dtGeom_, const RPCGeometry* rpcGeom_, 
@@ -80,9 +73,6 @@ private:
 
   TrajectoryStateOnSurface cylExtrapTrkSam(reco::TrackRef track, const float rho) const;
   FreeTrajectoryState freeTrajStateMuon(const reco::TrackRef track) const;
-
-  //RPCRecHitCollection* _ThePoints; 
-  //edm::OwnVector<RPCRecHit> RPCPointVector;
 
   edm::InputTag dtDigiLabel_;
   edm::EDGetTokenT<DTDigiCollection> dtDigiToken_ ;
@@ -169,7 +159,6 @@ private:
   short irpcdigi_TwinMux;
   short irpcrechits_TwinMux;
   short bmtf_size;
-  short DT_segment_onRPC;
   
   float MaxD = 80.0;
   float eyr = 0.5;
