@@ -1,4 +1,4 @@
-#define combined_trigger_studies_cxx
+﻿#define combined_trigger_studies_cxx
 #include "combined_trigger_studies.h"
 
 #include "TMath.h"
@@ -81,6 +81,14 @@ void combined_trigger_studies::Loop()
   
   TH1F *h_dX_MB2_layer_1 = new TH1F("h_dX_MB2_layer_1", "Distance on MB2 layer 1;#Deltax (cm); # entries", 100, 0, 10);
   TH1F *h_dX_MB2_layer_2 = new TH1F("h_dX_MB2_layer_2", "Distance on MB2 layer 2;#Deltax (cm); # entires", 100, 0, 10);
+
+  TH1F *h_dPhi_TrigIn_TrigOut_MB1 = new TH1F("h_dPhi_TrigIn_TrigOut_MB1", 
+					 "Distance in MB1 between TwinMux In and TwinMux Out;#Delta#phi (rad);# entires", 
+					 100, 0., .5);
+
+  TH1F *h_dPhi_TrigIn_TrigOut_MB2 = new TH1F("h_dPhi_TrigIn_TrigOut_MB2", 
+					 "Distance in MB2 between TwinMux In and TwinMux Out;#Delta#phi (rad);# entires", 
+					 100, 0., .5); 
   
   // efficiency
 
@@ -122,11 +130,12 @@ void combined_trigger_studies::Loop()
   TH1F *h_BX_twinmux_in_MB1 = new TH1F("h_BX_twinmux_in_MB1", "TwinMux In BX for MB1", 7, -3.5, 3.5);
   TH1F *h_BX_twinmux_in_MB2 = new TH1F("h_BX_twinmux_in_MB2", "TwinMux In BX for MB2", 7, -3.5, 3.5);
 
+  TH1F *h_BX_twinmux_out_MB1 = new TH1F("h_BX_twinmux_out_MB1", "TwinMux Out BX for MB1", 7, -3.5, 3.5);
+  TH1F *h_BX_twinmux_out_MB2 = new TH1F("h_BX_twinmux_out_MB2", "TwinMux Out BX for MB2", 7, -3.5, 3.5);
+
   TH1F *h_qual_twinmux_in_MB1 = new TH1F("h_qual_twinmux_in_MB1", "TwinMux In quality for MB1", 7, -0.5, 6.5);
   TH1F *h_qual_twinmux_in_MB2 = new TH1F("h_qual_twinmux_in_MB2", "TwinMux In quality for MB2", 7, -0.5, 6.5);
   
-  TH1F *h_BX_twinmux_out_MB1 = new TH1F("h_BX_twinmux_out_MB1", "TwinMux Out BX for MB1", 7, -3.5, 3.5);
-  TH1F *h_BX_twinmux_out_MB2 = new TH1F("h_BX_twinmux_out_MB2", "TwinMux Out BX for MB2", 7, -3.5, 3.5);
  
 
   if (fChain == 0) return;
@@ -382,11 +391,15 @@ void combined_trigger_studies::Loop()
 	}
 
       // ************************************
-      // We want to ...
+      // We want to study RPC trigger 
+      // quantities
       // ************************************
 
       // ************************************
       // 2nd excercise step 1:
+      // extrapolate DT segment on inner and
+      // outer layer of the RPC and match
+      // with the closest RPC recHit
       // ************************************
 
       bool has_dt_extrapolation_InOut_MB1 = false;
@@ -413,7 +426,7 @@ void combined_trigger_studies::Loop()
       for(int iRpcExtra = 0; iRpcExtra < (int) DTextrapolatedOnRPCRegion->size(); ++iRpcExtra) {
 	
       	if(DTextrapolatedOnRPCRegion->at(iRpcExtra)  != 0) continue; // !=0 when extrapolation is not in DT
-	if(DTextrapolatedOnRPCStation->at(iRpcExtra) == 3) continue; // we are just studying MB1 and MB2
+		if(DTextrapolatedOnRPCStation->at(iRpcExtra) == 3) continue; // we are just studying MB1 and MB2
 
 	// MB1
 
@@ -536,8 +549,15 @@ void combined_trigger_studies::Loop()
 	  }	  
 	}
       }
+      
+      // ************************************
+      // 2nd excercise step 2:
+      // Tune matching between extrapolated
+      // recHit and RPC recHit: our goal is 
+      // to evaluate muon efficiency
+      // ************************************      
 
-      if (has_dt_extrapolation_MB1[0] && has_dt_extrapolation_MB1[1] ) {
+    if (has_dt_extrapolation_MB1[0] && has_dt_extrapolation_MB1[1] ) {
 	
 	has_dt_extrapolation_InOut_MB1 = true;
 	    
@@ -570,6 +590,62 @@ void combined_trigger_studies::Loop()
 	  h_eff_rpc_eta_MB2->Fill(has_rpc_match_MB2,probe_vec.Eta());
 	  h_eff_rpc_phi_MB2->Fill(has_rpc_match_MB2,probe_vec.Phi());
 	}
+	
+      // ************************************
+      // 2nd excercise step 3:
+      // Evaluate how RPC change primitive
+      // BX looking at the TWinMux OUT
+      // distribution
+      // ************************************	
+	
+      Float_t minInOutMB1 = 999.;
+      Float_t minInOutMB2 = 999.;
+      Int_t BxOutMB1 = 999;
+      Int_t BxOutMB2 = 999;
+      
+      for (const auto & iTrig : twinmux_in_MB1)
+      {
+      	Float_t trigPhiInGlb = PhiConversion(ltTwinMuxIn_phi->at(iTrig), ltTwinMuxIn_sector->at(iTrig));
+      	
+      	for(Int_t iTrigOut = 0; iTrigOut < NdtltTwinMuxOut; ++iTrigOut) {
+      	
+      		Float_t trigPhiOutGlb = PhiConversion(ltTwinMuxOut_phi->at(iTrigOut), ltTwinMuxOut_sector->at(iTrigOut));
+      		Float_t dPhi = acos(cos(trigPhiInGlb - trigPhiOutGlb));
+      		if(dPhi < minInOutMB1){
+      			minInOutMB1 = dPhi;
+      			BxOutMB1 = ltTwinMuxOut_bx->at(iTrigOut);
+      		}
+
+      	}
+      	
+      	h_dPhi_TrigIn_TrigOut_MB1->Fill(minInOutMB1);
+      	
+      	if(minInOutMB1 < 0.1)
+      		h_BX_twinmux_out_MB1->Fill(BxOutMB1);
+      		
+      }
+      
+      for (const auto & iTrig : twinmux_in_MB2)
+      {
+      	Float_t trigPhiInGlb = PhiConversion(ltTwinMuxIn_phi->at(iTrig), ltTwinMuxIn_sector->at(iTrig));
+      	
+      	for(Int_t iTrigOut = 0; iTrigOut < NdtltTwinMuxOut; ++iTrigOut) {
+      	
+      		Float_t trigPhiOutGlb = PhiConversion(ltTwinMuxOut_phi->at(iTrigOut), ltTwinMuxOut_sector->at(iTrigOut));
+      		Float_t dPhi = acos(cos(trigPhiInGlb - trigPhiOutGlb));
+      		if(dPhi < minInOutMB2){
+      			minInOutMB2 = dPhi;
+      			BxOutMB2 = ltTwinMuxOut_bx->at(iTrigOut);
+      		}
+
+      	}
+      	
+      	h_dPhi_TrigIn_TrigOut_MB2->Fill(minInOutMB2);
+      	
+      	if(minInOutMB2 < 0.1)
+      		h_BX_twinmux_out_MB2->Fill(BxOutMB2);
+      		
+      }		
  
     } //loop on muons			
     
