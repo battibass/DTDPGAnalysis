@@ -544,11 +544,11 @@ void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollect
 	  
 		short nDTsegmentOnRPC = 0;
 		
-		if(segments4D->size()>10) {
-		  //Too many segments in this event we are not doing the extrapolation
-		  std::cout << "-----------------------------"
-			    << "Too many segments in this event"
-			    << " we are not doing the extrapolation"<<std::endl;
+		if(segments4D->size()>10 ||
+		   segment4D->dimension() != 4 ||                    //check if the dimension of the segment is 4
+		   segment4D->phiSegment()->recHits().size() < 5 ||  //check if there are 2 phi superlayers fired (at least 5 hits)
+		   segment4D->zSegment()->recHits().size()   < 4     //check if there are at least 4 hits for the Z projection
+		   ) {
 		  
 		  DT_segments_onRPC.push_back(nDTsegmentOnRPC);
 		  
@@ -609,11 +609,7 @@ void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollect
 		  
 		  const GeomDet* gdet=dtGeom_->idToDet(segment4D->geographicalId());
 		  const BoundPlane & DTSurface = gdet->surface();	 
-		  
-		  if(segment4D->dimension()!=4) continue;  //check if the dimension of the segment is 4
-		  if((segment4D->phiSegment()->recHits()).size()<7) continue; //check if there are 2 phi superlayers fired (at least 7hits)
-		  if((segment4D->zSegment()->recHits()).size()<4) continue; //check if there are at least 4 hits for the Z projection
-		  
+		  		  
 		  float Xo=segmentPosition.x();
 		  float Yo=segmentPosition.y();
 		  float Zo=segmentPosition.z();

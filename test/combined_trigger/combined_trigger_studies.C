@@ -425,15 +425,20 @@ void combined_trigger_studies::Loop()
 
       // MB1
 
+      std::cout << std::endl
+		<< dtsegm4D_sector->size() << " "
+		<< DTextrapolatedOnRPCSector->GetSize()
+		<< std::endl;
+
       if( has_match_DT_MB1_muon ) {
 	for(Int_t iOnRpc = 0; iOnRpc < NDTsegmentonRPC->at(dtsegment_index[0]); ++iOnRpc) {
 	  
 	  std::cout << dtsegm4D_sector->at(dtsegment_index[0]) << " "
-		    << getXY<int>(DTextrapolatedOnRPCSector,dtsegment_index[0],iOnRpc) 
-		    << dtsegm4D_sstation->at(dtsegment_index[0]) << " "
-		    << getXY<int>(DTextrapolatedOnRPCStation,dtsegment_index[0],iOnRpc) 
-		    << dtsegm4D_wheel->at(dtsegment_index[0]) << " "
-		    << getXY<int>(DTextrapolatedOnRPCWheel,dtsegment_index[0],iOnRpc) 
+		    << dtsegm4D_station->at(dtsegment_index[0]) << " "
+		    << dtsegm4D_wheel->at(dtsegment_index[0]) << "   "
+		    << getXY<int>(DTextrapolatedOnRPCSector,dtsegment_index[0],iOnRpc) << " " 
+		    << getXY<int>(DTextrapolatedOnRPCStation,dtsegment_index[0],iOnRpc) << " "
+		    << getXY<int>(DTextrapolatedOnRPCRing,dtsegment_index[0],iOnRpc) << " "
 		    << std::endl;
 
 	  if(getXY<int>(DTextrapolatedOnRPCLayer,dtsegment_index[0],iOnRpc) == 1) { // inner ring

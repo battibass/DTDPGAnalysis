@@ -8,7 +8,7 @@
 TCanvas* compareHistos(TString title, TH1F* histo1, TH1F* histo2, TString leg1, TString leg2)
 {
 
-  TCanvas *canvas = new TCanvas(title, title, 210,45,750,500);
+  TCanvas *canvas = new TCanvas(title, title, 500, 500);
   //histo1->SetStats(0);
   //histo2->SetStats(0);
   //histo1->GetXaxis()->SetTitle("BX");
@@ -24,12 +24,13 @@ TCanvas* compareHistos(TString title, TH1F* histo1, TH1F* histo2, TString leg1, 
   histo2->SetMarkerSize(1);
   histo2->SetMarkerColor(kBlue);
   histo2->SetLineColor(kBlue);
-  histo2->Scale(1./histo1->Integral());
+  histo2->Scale(1./histo2->Integral());
   histo2->Draw();
   histo1->Draw("same");
   histo1->SetMaximum(1.01);
   histo2->SetMaximum(1.01);
   TLegend *legend = new TLegend(0.65,0.75,0.9,0.9);   
+  legend->SetBorderSize(1);
   legend->AddEntry(histo1, leg1, "lep");
   legend->AddEntry(histo2, leg2, "lep");    
   legend->Draw();
@@ -331,7 +332,7 @@ void plotter()
   
   compareHistos(TString("TwinMux in Quality"),
 		h_qual_twinmux_in_MB1, h_qual_twinmux_in_MB2,
-		TString("MB1"), TString("MB2"))
+		TString("MB1"), TString("MB2"));
   
 
 }
