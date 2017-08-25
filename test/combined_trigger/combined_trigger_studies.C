@@ -43,10 +43,10 @@ void combined_trigger_studies::Loop()
 
   outputFile->cd("/kinematics");
 
-  TH1F *h_Zmumu_mass = new TH1F("h_Zmumu_mass", "Z boson candidate mass", 100, 50., 150.);
-  TH1F *h_mu_eta = new TH1F("h_mu_eta", "muon #eta;#eta;# entries", 48, -2.4, 2.4);
-  TH1F *h_mu_phi = new TH1F("h_mu_phi", "muon #phi;#phi (rad);# entries", 48, -pig,  pig);
-  TH1F *h_mu_pt  = new TH1F("h_mu_pt" , "muon p_{T};p_{T} (GeV/c);# entries", 150, 0., 150.);
+  TH1F *h_Zmumu_mass = new TH1F("h_Zmumu_mass", "Z boson candidate mass; m(#mu_tag,#mu_probe);# entries", 100, 50., 150.);
+  TH1F *h_mu_eta = new TH1F("h_mu_eta", "muon #eta;muon #eta;# entries", 48, -2.4, 2.4);
+  TH1F *h_mu_phi = new TH1F("h_mu_phi", "muon #phi;muon #phi (rad);# entries", 48, -pig,  pig);
+  TH1F *h_mu_pt  = new TH1F("h_mu_pt" , "muon p_{T};muon p_{T} (GeV/c);# entries", 150, 0., 150.);
   
   // distance
 
@@ -76,19 +76,22 @@ void combined_trigger_studies::Loop()
 					 "Distance in MB2 between segment and TwinMux In;#Delta#phi (rad);# entires", 
 					 100, 0., .5);  
 
+  TH1F *h_dPhi_seg_TrigOut_MB1 = new TH1F("h_dPhi_seg_TrigOut_MB1", 
+					 "Distance in MB1 between segment and TwinMux Out;#Delta#phi (rad);# entires", 
+					 100, 0., .5);
+
+  TH1F *h_dPhi_seg_TrigOut_MB2 = new TH1F("h_dPhi_seg_TrigOut_MB2", 
+					 "Distance in MB2 between segment and TwinMux Out;#Delta#phi (rad);# entires", 
+					 100, 0., .5);  
+
   TH1F *h_dX_MB1_layer_1 = new TH1F("h_dX_MB1_layer_1", "Distance on MB1 layer 1;#Deltax (cm); # entries", 100, 0, 10);
   TH1F *h_dX_MB1_layer_2 = new TH1F("h_dX_MB1_layer_2", "Distance on MB1 layer 2;#Deltax (cm); # entries", 100, 0, 10);
   
   TH1F *h_dX_MB2_layer_1 = new TH1F("h_dX_MB2_layer_1", "Distance on MB2 layer 1;#Deltax (cm); # entries", 100, 0, 10);
   TH1F *h_dX_MB2_layer_2 = new TH1F("h_dX_MB2_layer_2", "Distance on MB2 layer 2;#Deltax (cm); # entires", 100, 0, 10);
 
-  TH1F *h_dPhi_TrigIn_TrigOut_MB1 = new TH1F("h_dPhi_TrigIn_TrigOut_MB1", 
-					 "Distance in MB1 between TwinMux In and TwinMux Out;#Delta#phi (rad);# entires", 
-					 100, 0., .5);
+  
 
-  TH1F *h_dPhi_TrigIn_TrigOut_MB2 = new TH1F("h_dPhi_TrigIn_TrigOut_MB2", 
-					 "Distance in MB2 between TwinMux In and TwinMux Out;#Delta#phi (rad);# entires", 
-					 100, 0., .5); 
   
   // efficiency
 
@@ -127,16 +130,16 @@ void combined_trigger_studies::Loop()
 
   outputFile->cd("/trigger");
 
-  TH1F *h_BX_twinmux_in_MB1 = new TH1F("h_BX_twinmux_in_MB1", "TwinMux In BX for MB1", 7, -3.5, 3.5);
-  TH1F *h_BX_twinmux_in_MB2 = new TH1F("h_BX_twinmux_in_MB2", "TwinMux In BX for MB2", 7, -3.5, 3.5);
+  TH1F *h_BX_twinmux_in_MB1 = new TH1F("h_BX_twinmux_in_MB1", "TwinMux In BX for MB1; BX; # entries", 7, -3.5, 3.5);
+  TH1F *h_BX_twinmux_in_MB2 = new TH1F("h_BX_twinmux_in_MB2", "TwinMux In BX for MB2; BX; # entries", 7, -3.5, 3.5);
 
-  TH1F *h_BX_twinmux_out_MB1 = new TH1F("h_BX_twinmux_out_MB1", "TwinMux Out BX for MB1", 7, -3.5, 3.5);
-  TH1F *h_BX_twinmux_out_MB2 = new TH1F("h_BX_twinmux_out_MB2", "TwinMux Out BX for MB2", 7, -3.5, 3.5);
+  TH1F *h_BX_twinmux_out_MB1 = new TH1F("h_BX_twinmux_out_MB1", "TwinMux Out BX for MB1; BX; # entries", 7, -3.5, 3.5);
+  TH1F *h_BX_twinmux_out_MB2 = new TH1F("h_BX_twinmux_out_MB2", "TwinMux Out BX for MB2; BX; # entries", 7, -3.5, 3.5);
 
-  TH1F *h_qual_twinmux_in_MB1 = new TH1F("h_qual_twinmux_in_MB1", "TwinMux In quality for MB1", 7, -0.5, 6.5);
-  TH1F *h_qual_twinmux_in_MB2 = new TH1F("h_qual_twinmux_in_MB2", "TwinMux In quality for MB2", 7, -0.5, 6.5);
-  
+  TH1F *h_qual_twinmux_in_MB1 = new TH1F("h_qual_twinmux_in_MB1", "TwinMux In quality for MB1; quality; # entries", 7, -0.5, 6.5);
+  TH1F *h_qual_twinmux_in_MB2 = new TH1F("h_qual_twinmux_in_MB2", "TwinMux In quality for MB2; quality; # entries", 7, -0.5, 6.5);
  
+
 
   if (fChain == 0) return;
   
@@ -425,21 +428,8 @@ void combined_trigger_studies::Loop()
 
       // MB1
 
-      std::cout << std::endl
-		<< dtsegm4D_sector->size() << " "
-		<< DTextrapolatedOnRPCSector->GetSize()
-		<< std::endl;
-
       if( has_match_DT_MB1_muon ) {
-	for(Int_t iOnRpc = 0; iOnRpc < NDTsegmentonRPC->at(dtsegment_index[0]); ++iOnRpc) {
-	  
-	  std::cout << dtsegm4D_sector->at(dtsegment_index[0]) << " "
-		    << dtsegm4D_station->at(dtsegment_index[0]) << " "
-		    << dtsegm4D_wheel->at(dtsegment_index[0]) << "   "
-		    << getXY<int>(DTextrapolatedOnRPCSector,dtsegment_index[0],iOnRpc) << " " 
-		    << getXY<int>(DTextrapolatedOnRPCStation,dtsegment_index[0],iOnRpc) << " "
-		    << getXY<int>(DTextrapolatedOnRPCRing,dtsegment_index[0],iOnRpc) << " "
-		    << std::endl;
+	for(Int_t iOnRpc = 0; iOnRpc < NDTsegmentonRPC->at(dtsegment_index[0]); ++iOnRpc) {	  
 
 	  if(getXY<int>(DTextrapolatedOnRPCLayer,dtsegment_index[0],iOnRpc) == 1) { // inner ring
 	    
@@ -599,60 +589,67 @@ void combined_trigger_studies::Loop()
       
       // ************************************
       // 2nd excercise step 3:
-      // Evaluate how RPC change primitive
+      // Evaluate how RPC improve primitive
       // BX looking at the TWinMux OUT
-      // distribution
+      // distribution 
       // ************************************	
 	
-      Float_t minInOutMB1 = 999.;
-      Float_t minInOutMB2 = 999.;
-      Int_t BxOutMB1 = 999;
-      Int_t BxOutMB2 = 999;
-      
-      for (const auto & iTrig : twinmux_in_MB1)
-      {
-      	Float_t trigPhiInGlb = PhiConversion(ltTwinMuxIn_phi->at(iTrig), ltTwinMuxIn_sector->at(iTrig));
-      	
-      	for(Int_t iTrigOut = 0; iTrigOut < NdtltTwinMuxOut; ++iTrigOut) {
-      	
-      		Float_t trigPhiOutGlb = PhiConversion(ltTwinMuxOut_phi->at(iTrigOut), ltTwinMuxOut_sector->at(iTrigOut));
-      		Float_t dPhi = acos(cos(trigPhiInGlb - trigPhiOutGlb));
-      		if(dPhi < minInOutMB1){
-      			minInOutMB1 = dPhi;
-      			BxOutMB1 = ltTwinMuxOut_bx->at(iTrigOut);
-      		}
+      std::vector<Int_t> twinmux_out_MB1;
+      std::vector<Int_t> twinmux_out_MB2;
 
-      	}
-      	
-      	h_dPhi_TrigIn_TrigOut_MB1->Fill(minInOutMB1);
-      	
-      	if(minInOutMB1 < 0.1)
-      		h_BX_twinmux_out_MB1->Fill(BxOutMB1);
-      		
-      }
-      
-      for (const auto & iTrig : twinmux_in_MB2)
-      {
-      	Float_t trigPhiInGlb = PhiConversion(ltTwinMuxIn_phi->at(iTrig), ltTwinMuxIn_sector->at(iTrig));
-      	
-      	for(Int_t iTrigOut = 0; iTrigOut < NdtltTwinMuxOut; ++iTrigOut) {
-      	
-      		Float_t trigPhiOutGlb = PhiConversion(ltTwinMuxOut_phi->at(iTrigOut), ltTwinMuxOut_sector->at(iTrigOut));
-      		Float_t dPhi = acos(cos(trigPhiInGlb - trigPhiOutGlb));
-      		if(dPhi < minInOutMB2){
-      			minInOutMB2 = dPhi;
-      			BxOutMB2 = ltTwinMuxOut_bx->at(iTrigOut);
-      		}
+      for(Int_t iTrig = 0; iTrig < NdtltTwinMuxOut; ++iTrig) {
+	
+	if(has_match_DT_MB1_muon) {
+	  
+	  Int_t trigWh  = ltTwinMuxOut_wheel->at(iTrig);
+	  Int_t trigSt  = ltTwinMuxOut_station->at(iTrig);
+	  Int_t trigSec = ltTwinMuxOut_sector->at(iTrig);
+	  
+	  if(trigWh  == dtsegm4D_wheel->at(dtsegment_index[0])   &&
+	     trigSt  == dtsegm4D_station->at(dtsegment_index[0]) &&
+	     trigSec == dtsegm4D_sector->at(dtsegment_index[0]) ) {
+	    
+	    Float_t trigPhiGlb = PhiConversion(ltTwinMuxOut_phi->at(iTrig), trigSec);
+	    
+	    Float_t dPhi = acos(cos(dtsegm4D_phi->at(dtsegment_index[0]) - trigPhiGlb));
+	    
+	    h_dPhi_seg_TrigOut_MB1->Fill(dPhi);
+	    
+	    if(std::abs(dPhi) < 0.1) //CB tune it
+	      twinmux_out_MB1.push_back(iTrig);
+	  }
+	}
+	  
+	if(has_match_DT_MB2_muon) {
+	    
+	  Int_t trigWh  = ltTwinMuxOut_wheel->at(iTrig);
+	  Int_t trigSt  = ltTwinMuxOut_station->at(iTrig);
+	  Int_t trigSec = ltTwinMuxOut_sector->at(iTrig);
+	  
+	  if(trigWh  == dtsegm4D_wheel->at(dtsegment_index[1])   &&
+	     trigSt  == dtsegm4D_station->at(dtsegment_index[1]) &&
+	     trigSec == dtsegm4D_sector->at(dtsegment_index[1]) ) {
+	    
+	    Float_t trigPhiGlb = PhiConversion(ltTwinMuxOut_phi->at(iTrig), trigSec);
+	    
+	    Float_t dPhi = acos(cos(dtsegm4D_phi->at(dtsegment_index[1]) - trigPhiGlb));
+	    
+	    h_dPhi_seg_TrigOut_MB2->Fill(dPhi);
+	    
+	    if(std::abs(dPhi) < 0.1) //CB tune it
+	      twinmux_out_MB2.push_back(iTrig);
+	  }
+	    
+	}
 
-      	}
-      	
-      	h_dPhi_TrigIn_TrigOut_MB2->Fill(minInOutMB2);
-      	
-      	if(minInOutMB2 < 0.1)
-      		h_BX_twinmux_out_MB2->Fill(BxOutMB2);
-      		
-      }		
- 
+      } // loop on TwinMux Out
+
+      for (const auto & iTrig : twinmux_out_MB1)	  
+	h_BX_twinmux_out_MB1->Fill(ltTwinMuxOut_bx->at(iTrig));
+
+      for (const auto & iTrig : twinmux_out_MB2)
+	h_BX_twinmux_out_MB2->Fill(ltTwinMuxOut_bx->at(iTrig));
+
     } //loop on muons			
     
   } // loop on event
