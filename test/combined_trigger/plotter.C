@@ -5,6 +5,40 @@
 #include "TFile.h"
 #include "tdrstyle.C"
 
+TCanvas* compareHistos(TString title, TH1F* histo1, TH1F* histo2, TString leg1, TString leg2)
+{
+
+  TCanvas *canvas = new TCanvas(title, title, 210,45,750,500);
+  //histo1->SetStats(0);
+  //histo2->SetStats(0);
+  //histo1->GetXaxis()->SetTitle("BX");
+  //histo2->GetXaxis()->SetTitle("BX");
+  //histo1->SetTitle("BX in MB2");
+  //histo2->SetTitle("BX in MB2");
+  histo1->SetMarkerStyle(20);
+  histo1->SetMarkerSize(1);
+  histo1->SetMarkerColor(kRed);
+  histo1->SetLineColor(kRed);
+  histo1->Scale(1./histo1->Integral());
+  histo2->SetMarkerStyle(20);
+  histo2->SetMarkerSize(1);
+  histo2->SetMarkerColor(kBlue);
+  histo2->SetLineColor(kBlue);
+  histo2->Scale(1./histo1->Integral());
+  histo2->Draw();
+  histo1->Draw("same");
+  histo1->SetMaximum(1.01);
+  histo2->SetMaximum(1.01);
+  TLegend *legend = new TLegend(0.65,0.75,0.9,0.9);   
+  legend->AddEntry(histo1, leg1, "lep");
+  legend->AddEntry(histo2, leg2, "lep");    
+  legend->Draw();
+
+  return canvas;
+  
+}
+  
+
 void plotter()
 {
 
@@ -267,32 +301,6 @@ void plotter()
     legend_eff_phi_TwinMux->Draw();
   */
   
-  TCanvas *BX_MB1 = new TCanvas("BX in MB1", "BX in MB1", 210,45,750,500);
-  //    BX_MB1->SetLogy();
-  h_BX_twinmux_in_MB1->SetStats(0);
-  h_BX_twinmux_out_MB1->SetStats(0);
-  h_BX_twinmux_in_MB1->GetXaxis()->SetTitle("BX");
-  h_BX_twinmux_out_MB1->GetXaxis()->SetTitle("BX");
-  h_BX_twinmux_in_MB1->SetTitle("BX in MB1");
-  h_BX_twinmux_out_MB1->SetTitle("BX in MB1");
-  h_BX_twinmux_in_MB1->SetMarkerStyle(20);
-  h_BX_twinmux_in_MB1->SetMarkerSize(1);
-  h_BX_twinmux_in_MB1->SetMarkerColor(kRed);
-  h_BX_twinmux_in_MB1->SetLineColor(kRed);
-  h_BX_twinmux_in_MB1->Scale(1/h_BX_twinmux_in_MB1->Integral());
-  h_BX_twinmux_out_MB1->SetMarkerStyle(20);
-  h_BX_twinmux_out_MB1->SetMarkerSize(1);
-  h_BX_twinmux_out_MB1->SetMarkerColor(kBlue);
-  h_BX_twinmux_out_MB1->SetLineColor(kBlue);
-  h_BX_twinmux_out_MB1->Scale(1/h_BX_twinmux_out_MB1->Integral());
-  h_BX_twinmux_out_MB1->Draw();
-  h_BX_twinmux_in_MB1->Draw("same");
-  h_BX_twinmux_out_MB1->SetMaximum(1.01);
-  h_BX_twinmux_in_MB1->SetMaximum(1.01);
-  TLegend *legend_BX_MB1 = new TLegend(0.65,0.75,0.9,0.9);   
-  legend_BX_MB1->AddEntry(h_BX_twinmux_in_MB1, "TwinMux In", "lep");
-  legend_BX_MB1->AddEntry(h_BX_twinmux_out_MB1,"TwinMux Out", "lep");    
-  legend_BX_MB1->Draw();
   
   TCanvas *BX_MB2 = new TCanvas("BX in MB2", "BX in MB2", 210,45,750,500);
   //    BX_MB2->SetLogy();
@@ -321,36 +329,9 @@ void plotter()
   legend_BX_MB2->AddEntry(h_BX_twinmux_out_MB2,"TwinMux Out", "lep");    
   legend_BX_MB2->Draw();
   
-  TCanvas *qual_twinmux_in = new TCanvas("TwinMux in Quality", "TwinMux in Quality", 210,45,750,500);
-  qual_twinmux_in->SetLogy();
-  h_qual_twinmux_in_MB1->SetStats(0);
-  h_qual_twinmux_in_MB2->SetStats(0);
-  h_qual_twinmux_in_MB1->GetXaxis()->SetTitle("Quality");
-  h_qual_twinmux_in_MB2->GetXaxis()->SetTitle("Quality");
-  h_qual_twinmux_in_MB1->SetTitle("TwinMun In Quality");
-  h_qual_twinmux_in_MB2->SetTitle("TwinMux in Quality");
-  h_qual_twinmux_in_MB1->SetMarkerStyle(20);
-  h_qual_twinmux_in_MB1->SetMarkerSize(1);
-  h_qual_twinmux_in_MB1->SetMarkerColor(kRed);
-  h_qual_twinmux_in_MB1->SetLineColor(kRed);
-  h_qual_twinmux_in_MB1->Scale(1/h_qual_twinmux_in_MB1->Integral());
-  h_qual_twinmux_in_MB2->SetMarkerStyle(20);
-  h_qual_twinmux_in_MB2->SetMarkerSize(1);
-  h_qual_twinmux_in_MB2->SetMarkerColor(kBlue);
-  h_qual_twinmux_in_MB2->SetLineColor(kBlue);
-  h_qual_twinmux_in_MB2->Scale(1/h_qual_twinmux_in_MB2->Integral());
-  h_qual_twinmux_in_MB2->Draw();
-  h_qual_twinmux_in_MB1->Draw("same");
-  h_qual_twinmux_in_MB2->SetMaximum(1.01);
-  h_qual_twinmux_in_MB1->SetMaximum(1.01);
-  TLegend *legend_qual = new TLegend(0.65,0.75,0.9,0.9);   
-  legend_qual->AddEntry(h_qual_twinmux_in_MB1, "MB1", "lep");
-  legend_qual->AddEntry(h_qual_twinmux_in_MB2,"MB2", "lep");    
-  legend_qual->Draw();
+  compareHistos(TString("TwinMux in Quality"),
+		h_qual_twinmux_in_MB1, h_qual_twinmux_in_MB2,
+		TString("MB1"), TString("MB2"))
   
-  /////////////////////////
-  ////  Now plot the  /////
-  //// the histograms /////
-  /////////////////////////
 
 }
