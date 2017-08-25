@@ -423,32 +423,29 @@ void combined_trigger_studies::Loop()
       Float_t rpcCluSizeMB2[2] = {0., 0.}; 
       Float_t stripWidthMB2[2] = {0., 0.};	    
 
-      for(int iRpcExtra = 0; iRpcExtra < (int) DTextrapolatedOnRPCRegion->size(); ++iRpcExtra) {
-	
-      	if(DTextrapolatedOnRPCRegion->at(iRpcExtra)  != 0) continue; // !=0 when extrapolation is not in DT
-		if(DTextrapolatedOnRPCStation->at(iRpcExtra) == 3) continue; // we are just studying MB1 and MB2
+      // MB1
 
-	// MB1
+      if( has_match_DT_MB1_muon ) {
+	for(Int_t iOnRpc = 0; iOnRpc < NDTsegmentonRPC->at(dtsegment_index[0]); ++iOnRpc) {
 
-	if( has_match_DT_MB1_muon && 
-	    DTextrapolatedOnRPCStation->at(iRpcExtra)  == 1 &&
-	    (dtsegm4D_sector->at(dtsegment_index[0])   == DTextrapolatedOnRPCSector->at(iRpcExtra))  &&
-	    (dtsegm4D_wheel->at(dtsegment_index[0])    == DTextrapolatedOnRPCRing->at(iRpcExtra)) ) {	  
+	  std::cout << dtsegm4D_sector->at(dtsegment_index[0]) << " "
+		    << getXY<int>(DTextrapolatedOnRPCSector,dtsegment_index[0],iOnRpc) 
+		    << std::endl;
 
-	  if(DTextrapolatedOnRPCLayer->at(iRpcExtra) == 1) { // inner ring
+	  if(getXY<int>(DTextrapolatedOnRPCLayer,dtsegment_index[0],iOnRpc) == 1) { // inner ring
 	    
 	    has_dt_extrapolation_MB1[0] = true;
 	    
-	    stripWidthMB1[0] = DTextrapolatedOnRPCStripw->at(iRpcExtra);
+	    stripWidthMB1[0] = getXY<float>(DTextrapolatedOnRPCStripw,dtsegment_index[0],iOnRpc);
 	    
 	    for(int iRpc = 0; iRpc < NirpcrechitsTwinMux; ++iRpc) {
 	      
-	      if((RpcRecHitTwinMuxStation->at(iRpc) == DTextrapolatedOnRPCStation->at(iRpcExtra)) &&
-		 (RpcRecHitTwinMuxSector->at(iRpc)  == DTextrapolatedOnRPCSector->at(iRpcExtra))  &&
-		 (RpcRecHitTwinMuxRing->at(iRpc)    == DTextrapolatedOnRPCRing->at(iRpcExtra))    &&
-		 (RpcRecHitTwinMuxLayer->at(iRpc)   == DTextrapolatedOnRPCLayer->at(iRpcExtra)) ) {
+	      if((RpcRecHitTwinMuxStation->at(iRpc) == getXY<int>(DTextrapolatedOnRPCStation,dtsegment_index[0],iOnRpc)) &&
+		 (RpcRecHitTwinMuxSector->at(iRpc)  == getXY<int>(DTextrapolatedOnRPCSector,dtsegment_index[0],iOnRpc))  &&
+		 (RpcRecHitTwinMuxRing->at(iRpc)    == getXY<int>(DTextrapolatedOnRPCRing,dtsegment_index[0],iOnRpc))    &&
+		 (RpcRecHitTwinMuxLayer->at(iRpc)   == getXY<int>(DTextrapolatedOnRPCLayer,dtsegment_index[0],iOnRpc)) ) {
 		
-		Float_t dXInner  = abs(DTextrapolatedOnRPCLocX->at(iRpcExtra) - RpcRechitTwinMuxLocX->at(iRpc));
+		Float_t dXInner  = abs(getXY<float>(DTextrapolatedOnRPCLocX,dtsegment_index[0],iOnRpc) - RpcRechitTwinMuxLocX->at(iRpc));
 		
 		if(dXInner < minDxMB1[0]) {
 		  minDxMB1[0] = dXInner;
@@ -461,94 +458,95 @@ void combined_trigger_studies::Loop()
 	    
 	  }
 	  
-	  if(DTextrapolatedOnRPCLayer->at(iRpcExtra) == 2) { // outer ring
+	  // if(DTextrapolatedOnRPCLayer->at(iRpcExtra) == 2) { // outer ring
 	    
-	    has_dt_extrapolation_MB1[1] = true;
+	  //   has_dt_extrapolation_MB1[1] = true;
 	    
-	    stripWidthMB1[1] = DTextrapolatedOnRPCStripw->at(iRpcExtra);
+	  //   stripWidthMB1[1] = DTextrapolatedOnRPCStripw->at(iRpcExtra);
 	    
-	    for(int iRpc = 0; iRpc < NirpcrechitsTwinMux; ++iRpc) {
+	  //   for(int iRpc = 0; iRpc < NirpcrechitsTwinMux; ++iRpc) {
 	      
-	      if((RpcRecHitTwinMuxStation->at(iRpc) == DTextrapolatedOnRPCStation->at(iRpcExtra)) &&
-		 (RpcRecHitTwinMuxSector->at(iRpc)  == DTextrapolatedOnRPCSector->at(iRpcExtra))  &&
-		 (RpcRecHitTwinMuxRing->at(iRpc)    == DTextrapolatedOnRPCRing->at(iRpcExtra))    &&
-		 (RpcRecHitTwinMuxLayer->at(iRpc)   == DTextrapolatedOnRPCLayer->at(iRpcExtra)) ) {
+	  //     if((RpcRecHitTwinMuxStation->at(iRpc) == DTextrapolatedOnRPCStation->at(iRpcExtra)) &&
+	  // 	 (RpcRecHitTwinMuxSector->at(iRpc)  == DTextrapolatedOnRPCSector->at(iRpcExtra))  &&
+	  // 	 (RpcRecHitTwinMuxRing->at(iRpc)    == DTextrapolatedOnRPCRing->at(iRpcExtra))    &&
+	  // 	 (RpcRecHitTwinMuxLayer->at(iRpc)   == DTextrapolatedOnRPCLayer->at(iRpcExtra)) ) {
 		
-		Float_t dXInner  = abs(DTextrapolatedOnRPCLocX->at(iRpcExtra) - RpcRechitTwinMuxLocX->at(iRpc));
+	  // 	Float_t dXInner  = abs(DTextrapolatedOnRPCLocX->at(iRpcExtra) - RpcRechitTwinMuxLocX->at(iRpc));
 		
-		if(dXInner < minDxMB1[1]) {
-		  minDxMB1[1] = dXInner;
-		  rpcCluSizeMB1[1] = RpcRecHitTwinMuxClusterSize->at(iRpc);
-		}
-	      }
-	    }
+	  // 	if(dXInner < minDxMB1[1]) {
+	  // 	  minDxMB1[1] = dXInner;
+	  // 	  rpcCluSizeMB1[1] = RpcRecHitTwinMuxClusterSize->at(iRpc);
+	  // 	}
+	  //     }
+	  //   }
 	    
-	    h_dX_MB1_layer_2->Fill(minDxMB1[1]);
+	  //   h_dX_MB1_layer_2->Fill(minDxMB1[1]);
 	    
-	  }
+	  // }
 	  
-	}
-	
-	// MB2
-      
-	if( has_match_DT_MB2_muon &&
-	    DTextrapolatedOnRPCStation->at(iRpcExtra)  == 2 &&
-	    (dtsegm4D_sector->at(dtsegment_index[1])   == DTextrapolatedOnRPCSector->at(iRpcExtra)) &&
-	    (dtsegm4D_wheel->at(dtsegment_index[1])    == DTextrapolatedOnRPCRing->at(iRpcExtra)) ) {	  
-
-	  if(DTextrapolatedOnRPCLayer->at(iRpcExtra) == 1) { // inner ring
-
-	    has_dt_extrapolation_MB2[0] = true;
-	    
-	    stripWidthMB2[0] = DTextrapolatedOnRPCStripw->at(iRpcExtra);
-	    
-	    for(int iRpc = 0; iRpc < NirpcrechitsTwinMux; ++iRpc) {
-	      
-	      if((RpcRecHitTwinMuxStation->at(iRpc) == DTextrapolatedOnRPCStation->at(iRpcExtra)) &&
-		 (RpcRecHitTwinMuxSector->at(iRpc)  == DTextrapolatedOnRPCSector->at(iRpcExtra))  &&
-		 (RpcRecHitTwinMuxRing->at(iRpc)    == DTextrapolatedOnRPCRing->at(iRpcExtra))    &&
-		 (RpcRecHitTwinMuxLayer->at(iRpc)   == DTextrapolatedOnRPCLayer->at(iRpcExtra)) ) {
-		
-		Float_t dXInner  = abs(DTextrapolatedOnRPCLocX->at(iRpcExtra) - RpcRechitTwinMuxLocX->at(iRpc));
-		
-		if(dXInner < minDxMB2[0]) {
-		  minDxMB2[0] = dXInner;
-		  rpcCluSizeMB2[0] = RpcRecHitTwinMuxClusterSize->at(iRpc);
-		}
-	      }
-	    }
-	    
-	    h_dX_MB2_layer_1->Fill(minDxMB2[0]);
-	    
-	  }
-	  
-	  if(DTextrapolatedOnRPCLayer->at(iRpcExtra) == 2) { // outer ring
-	    
-	    has_dt_extrapolation_MB2[1] = true;
-	    
-	    stripWidthMB2[1] = DTextrapolatedOnRPCStripw->at(iRpcExtra);
-	    
-	    for(int iRpc = 0; iRpc < NirpcrechitsTwinMux; ++iRpc) {
-	      
-	      if((RpcRecHitTwinMuxStation->at(iRpc) == DTextrapolatedOnRPCStation->at(iRpcExtra)) &&
-		 (RpcRecHitTwinMuxSector->at(iRpc)  == DTextrapolatedOnRPCSector->at(iRpcExtra))  &&
-		 (RpcRecHitTwinMuxRing->at(iRpc)    == DTextrapolatedOnRPCRing->at(iRpcExtra))    &&
-		 (RpcRecHitTwinMuxLayer->at(iRpc)   == DTextrapolatedOnRPCLayer->at(iRpcExtra)) ) {
-		
-		Float_t dXInner  = abs(DTextrapolatedOnRPCLocX->at(iRpcExtra) - RpcRechitTwinMuxLocX->at(iRpc));
-		
-		if(dXInner < minDxMB2[1]) {
-		  minDxMB2[1] = dXInner;
-		  rpcCluSizeMB2[1] = RpcRecHitTwinMuxClusterSize->at(iRpc);
-		}
-	      }
-	    }
-	    
-	    h_dX_MB2_layer_2->Fill(minDxMB2[1]);
-	    
-	  }	  
 	}
       }
+	
+      // 	// MB2
+      
+      // 	if( has_match_DT_MB2_muon &&
+      // 	    DTextrapolatedOnRPCStation->at(iRpcExtra)  == 2 &&
+      // 	    (dtsegm4D_sector->at(dtsegment_index[1])   == DTextrapolatedOnRPCSector->at(iRpcExtra)) &&
+      // 	    (dtsegm4D_wheel->at(dtsegment_index[1])    == DTextrapolatedOnRPCRing->at(iRpcExtra)) ) {	  
+
+      // 	  if(DTextrapolatedOnRPCLayer->at(iRpcExtra) == 1) { // inner ring
+
+      // 	    has_dt_extrapolation_MB2[0] = true;
+	    
+      // 	    stripWidthMB2[0] = DTextrapolatedOnRPCStripw->at(iRpcExtra);
+	    
+      // 	    for(int iRpc = 0; iRpc < NirpcrechitsTwinMux; ++iRpc) {
+	      
+      // 	      if((RpcRecHitTwinMuxStation->at(iRpc) == DTextrapolatedOnRPCStation->at(iRpcExtra)) &&
+      // 		 (RpcRecHitTwinMuxSector->at(iRpc)  == DTextrapolatedOnRPCSector->at(iRpcExtra))  &&
+      // 		 (RpcRecHitTwinMuxRing->at(iRpc)    == DTextrapolatedOnRPCRing->at(iRpcExtra))    &&
+      // 		 (RpcRecHitTwinMuxLayer->at(iRpc)   == DTextrapolatedOnRPCLayer->at(iRpcExtra)) ) {
+		
+      // 		Float_t dXInner  = abs(DTextrapolatedOnRPCLocX->at(iRpcExtra) - RpcRechitTwinMuxLocX->at(iRpc));
+		
+      // 		if(dXInner < minDxMB2[0]) {
+      // 		  minDxMB2[0] = dXInner;
+      // 		  rpcCluSizeMB2[0] = RpcRecHitTwinMuxClusterSize->at(iRpc);
+      // 		}
+      // 	      }
+      // 	    }
+	    
+      // 	    h_dX_MB2_layer_1->Fill(minDxMB2[0]);
+	    
+      // 	  }
+	  
+      // 	  if(DTextrapolatedOnRPCLayer->at(iRpcExtra) == 2) { // outer ring
+	    
+      // 	    has_dt_extrapolation_MB2[1] = true;
+	    
+      // 	    stripWidthMB2[1] = DTextrapolatedOnRPCStripw->at(iRpcExtra);
+	    
+      // 	    for(int iRpc = 0; iRpc < NirpcrechitsTwinMux; ++iRpc) {
+	      
+      // 	      if((RpcRecHitTwinMuxStation->at(iRpc) == DTextrapolatedOnRPCStation->at(iRpcExtra)) &&
+      // 		 (RpcRecHitTwinMuxSector->at(iRpc)  == DTextrapolatedOnRPCSector->at(iRpcExtra))  &&
+      // 		 (RpcRecHitTwinMuxRing->at(iRpc)    == DTextrapolatedOnRPCRing->at(iRpcExtra))    &&
+      // 		 (RpcRecHitTwinMuxLayer->at(iRpc)   == DTextrapolatedOnRPCLayer->at(iRpcExtra)) ) {
+		
+      // 		Float_t dXInner  = abs(DTextrapolatedOnRPCLocX->at(iRpcExtra) - RpcRechitTwinMuxLocX->at(iRpc));
+		
+      // 		if(dXInner < minDxMB2[1]) {
+      // 		  minDxMB2[1] = dXInner;
+      // 		  rpcCluSizeMB2[1] = RpcRecHitTwinMuxClusterSize->at(iRpc);
+      // 		}
+      // 	      }
+      // 	    }
+	    
+      // 	    h_dX_MB2_layer_2->Fill(minDxMB2[1]);
+	    
+      // 	  }	  
+      // 	}
+      // }
       
       // ************************************
       // 2nd excercise step 2:

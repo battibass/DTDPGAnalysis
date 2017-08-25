@@ -539,7 +539,6 @@ void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollect
 	new ((*segm4D_zHits_Time)[idtsegments])     TVectorF(dummyfloat);
 	new ((*segm4D_zHits_TimeCali)[idtsegments]) TVectorF(dummyfloat);
       }
-      idtsegments++;
       
 	if(dtExtrapolation_) {
 	  
@@ -750,13 +749,14 @@ void TTreeGenerator::fill_dtsegments_variables(edm::Handle<DTRecSegment4DCollect
 		  new ((*DT_extrapolated_OnRPC_Station)[idtsegments])  TVectorF(DTextrapolatedOnRPC_Station);
 		  new ((*DT_extrapolated_OnRPC_Layer)[idtsegments])    TVectorF(DTextrapolatedOnRPC_Layer);
 		  new ((*DT_extrapolated_OnRPC_Roll)[idtsegments])     TVectorF(DTextrapolatedOnRPC_Roll);
-		  new ((*DT_extrapolated_OnRPC_Ring)[idtsegments])     TVectorFd(DTextrapolatedOnRPC_Ring);
+		  new ((*DT_extrapolated_OnRPC_Ring)[idtsegments])     TVectorF(DTextrapolatedOnRPC_Ring);
 		  new ((*DT_extrapolated_OnRPC_Stripw)[idtsegments])   TVectorF(DTextrapolatedOnRPC_Stripw);
-		  
 
 		} //else: segments4D->size()<10
-	} // if: do you want extrapolation ?
-	
+	} // if: do you want extrapolation ? ?
+		  
+	++idtsegments;
+
     } // for on segment4D
   } // for on chambIt
  
@@ -1293,7 +1293,7 @@ void TTreeGenerator::beginJob()
   tree_->Branch("dtsegm4D_z_hitsTime",&segm4D_zHits_Time,2048000,0);
   tree_->Branch("dtsegm4D_z_hitsTimeCali",&segm4D_zHits_TimeCali,2048000,0);
   
-  tree_->Branch("NDTsegmentonRPC", &DT_segment_onRPC);
+  tree_->Branch("NDTsegmentonRPC", &DT_segments_onRPC);
 
   tree_->Branch("DTextrapolatedOnRPCBX", &DT_extrapolated_OnRPC_BX,2048000,0);
   tree_->Branch("DTextrapolatedOnRPCLocX", &DT_extrapolated_OnRPC_Loc_x,2048000,0);
@@ -1489,17 +1489,25 @@ inline void TTreeGenerator::clear_Arrays()
   segm4D_zHits_Time->Clear();
   segm4D_zHits_TimeCali->Clear();
 
-  //CSC segment variables 
-  // cscsegm_ring.clear();
-  // cscsegm_chamber.clear();
-  // cscsegm_station.clear();
-  // cscsegm_cosx.clear();
-  // cscsegm_cosy.clear();
-  // cscsegm_cosz.clear();
-  // cscsegm_phi.clear();
-  // cscsegm_eta.clear();
-  // cscsegm_normchi2.clear();
-  // cscsegm_nRecHits.clear();
+  DT_segments_onRPC.clear();
+  DT_extrapolated_OnRPC_BX->Clear();
+  DT_extrapolated_OnRPC_Loc_x->Clear();
+  DT_extrapolated_OnRPC_Loc_y->Clear();
+  DT_extrapolated_OnRPC_Loc_z->Clear();
+  DT_extrapolated_OnRPC_Loc_eta->Clear();
+  DT_extrapolated_OnRPC_Loc_phi->Clear();
+  DT_extrapolated_OnRPC_Glob_x->Clear();
+  DT_extrapolated_OnRPC_Glob_y->Clear();
+  DT_extrapolated_OnRPC_Glob_z->Clear();
+  DT_extrapolated_OnRPC_Glob_eta->Clear();
+  DT_extrapolated_OnRPC_Glob_phi->Clear();
+  DT_extrapolated_OnRPC_Region->Clear();
+  DT_extrapolated_OnRPC_Sector->Clear();
+  DT_extrapolated_OnRPC_Station->Clear();
+  DT_extrapolated_OnRPC_Layer->Clear();
+  DT_extrapolated_OnRPC_Roll->Clear();
+  DT_extrapolated_OnRPC_Ring->Clear();
+  DT_extrapolated_OnRPC_Stripw->Clear();
 
   //TM Variables
   ltTwinMuxIn_wheel.clear();
@@ -1520,12 +1528,6 @@ inline void TTreeGenerator::clear_Arrays()
   ltTwinMuxOut_phi.clear();
   ltTwinMuxOut_phiB.clear();
   ltTwinMuxOut_is2nd.clear();
-
-  // ltTwinMux_thWheel.clear();
-  // ltTwinMux_thSector.clear();
-  // ltTwinMux_thStation.clear();
-  // ltTwinMux_thBx.clear();
-  // ltTwinMux_thHits.clear();
 
   //muon variables
   STAMu_isMuGlobal.clear();
@@ -1584,21 +1586,6 @@ inline void TTreeGenerator::clear_Arrays()
   TRKMu_sector_MB4.clear();
   TRKMu_wheel_MB4.clear();
 
-  //GMT
-  // gmt_bx.clear();
-  // gmt_phi.clear();
-  // gmt_eta.clear();
-  // gmt_pt.clear();
-  // gmt_qual.clear();
-  // gmt_charge.clear();
-  // gmt_tf_idx.clear();
-
-  //GT
-  // gt_algo_bit.clear();
-  // gt_algo_bx.clear();
-  // gt_tt_bit.clear();
-  // gt_tt_bx.clear();
-
   //HLT
   hlt_path.clear();
   hlt_filter.clear();
@@ -1606,61 +1593,6 @@ inline void TTreeGenerator::clear_Arrays()
   hlt_filter_phi.clear();
   hlt_filter_eta.clear();
   hlt_filter_pt.clear();
-
-  // RPC rec hits
-  // rpc_region.clear();
-  // rpc_clusterSize.clear();
-  // rpc_strip.clear();
-  // rpc_bx.clear();
-  // rpc_station.clear();
-  // rpc_sector.clear();
-  // rpc_layer.clear();
-  // rpc_subsector.clear();
-  // rpc_roll.clear();
-  // rpc_ring.clear();
-  
-  //Bmtf_Size.clear();
-  // Bmtf_Pt.clear();
-  // Bmtf_Eta.clear();
-  // Bmtf_Phi.clear();
-  // Bmtf_GlobalPhi.clear();
-  // Bmtf_qual.clear();
-  // Bmtf_ch.clear();
-  // Bmtf_bx.clear();
-  // Bmtf_processor.clear();
-  // Bmtf_trAddress.clear();
-  // Bmtf_wh.clear();
-  // Bmtf_FineBit.clear();
-  
-  // Bmtf_phBx.clear();
-  // Bmtf_phWh.clear();
-  // Bmtf_phSe.clear();
-  // Bmtf_phSt.clear();
-  // Bmtf_phAng.clear();
-  // Bmtf_phBandAng.clear();
-  // Bmtf_phCode.clear();
-  // Bmtf_phTs2Tag.clear();
-  
-  // Bmtf_thBx.clear();
-  // Bmtf_thWh.clear();
-  // Bmtf_thSe.clear();
-  // Bmtf_thSt.clear();
-  // Bmtf_thTheta.clear();
-  // Bmtf_thCode.clear();
-  
-  // RpcDigi_TwinMux_bx.clear();
-  // RpcDigi_TwinMux_strip.clear();
-  // RpcDigi_TwinMux_region.clear();
-  // RpcDigi_TwinMux_ring.clear();
-  // RpcDigi_TwinMux_station.clear();
-  // RpcDigi_TwinMux_layer.clear();
-  // RpcDigi_TwinMux_sector.clear();
-  // RpcDigi_TwinMux_subsector.clear();
-  // RpcDigi_TwinMux_roll.clear();
-  // RpcDigi_TwinMux_trIndex.clear();
-  // RpcDigi_TwinMux_det.clear();
-  // RpcDigi_TwinMux_subdetId.clear();
-  // RpcDigi_TwinMux_rawId.clear();
   
   // Unpacking RPC rec hits
   RpcRechit_TwinMux_region.clear();
@@ -1683,26 +1615,7 @@ inline void TTreeGenerator::clear_Arrays()
   RpcRechit_TwinMux_Glob_z.clear(); 
   RpcRechit_TwinMux_Glob_eta.clear(); 
   RpcRechit_TwinMux_Glob_phi.clear(); 
-  
-  DT_extrapolated_OnRPC_BX.clear();
-  DT_extrapolated_OnRPC_Loc_x.clear();
-  DT_extrapolated_OnRPC_Loc_y.clear();
-  DT_extrapolated_OnRPC_Loc_z.clear();
-  DT_extrapolated_OnRPC_Loc_eta.clear();
-  DT_extrapolated_OnRPC_Loc_phi.clear();
-  DT_extrapolated_OnRPC_Glob_x.clear();
-  DT_extrapolated_OnRPC_Glob_y.clear();
-  DT_extrapolated_OnRPC_Glob_z.clear();
-  DT_extrapolated_OnRPC_Glob_eta.clear();
-  DT_extrapolated_OnRPC_Glob_phi.clear();
-  DT_extrapolated_OnRPC_Region.clear();
-  DT_extrapolated_OnRPC_Sector.clear();
-  DT_extrapolated_OnRPC_Station.clear();
-  DT_extrapolated_OnRPC_Layer.clear();
-  DT_extrapolated_OnRPC_Roll.clear();
-  DT_extrapolated_OnRPC_Ring.clear();
-  DT_extrapolated_OnRPC_Stripw.clear();
-  
+    
   return;
 }
 

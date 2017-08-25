@@ -15,6 +15,7 @@
 // Header file for the classes stored in the TTree if any.
 #include "vector"
 #include "TClonesArray.h"
+#include "TVector.h"
 #include "vector"
 #include "TLorentzVector.h"
 
@@ -32,7 +33,7 @@ class combined_trigger_studies {
   //********************
 
   // Files and number of events
-  TString input_file_name  = "/afs/cern.ch/user/b/battilan/work/public/DTNtuple.root";
+  TString input_file_name  = "../DTNtuple.root";
   TString output_file_name = "analysis_results.root";
 
   Long64_t n_events = 500000;
@@ -203,22 +204,24 @@ class combined_trigger_studies {
   vector<float>   *RpcRechitTwinMuxGlobZ;
   vector<float>   *RpcRechitTwinMuxGlobPhi;
 
-  vector<float>   *DTextrapolatedOnRPCBX;
-  vector<float>   *DTextrapolatedOnRPCLocX;
-  vector<float>   *DTextrapolatedOnRPCLocY;
-  vector<float>   *DTextrapolatedOnRPCLocZ;
-  vector<float>   *DTextrapolatedOnRPCGlobX;
-  vector<float>   *DTextrapolatedOnRPCGlobY;
-  vector<float>   *DTextrapolatedOnRPCGlobZ;
-  vector<float>   *DTextrapolatedOnRPCGlobEta;
-  vector<float>   *DTextrapolatedOnRPCGlobPhi;
-  vector<float>   *DTextrapolatedOnRPCRegion;
-  vector<float>   *DTextrapolatedOnRPCSector;
-  vector<float>   *DTextrapolatedOnRPCStation;
-  vector<float>   *DTextrapolatedOnRPCLayer;
-  vector<float>   *DTextrapolatedOnRPCRoll;
-  vector<float>   *DTextrapolatedOnRPCRing;
-  vector<float>   *DTextrapolatedOnRPCStripw;
+  vector<short>   *NDTsegmentonRPC;
+
+  TClonesArray   *DTextrapolatedOnRPCBX;
+  TClonesArray   *DTextrapolatedOnRPCLocX;
+  TClonesArray   *DTextrapolatedOnRPCLocY;
+  TClonesArray   *DTextrapolatedOnRPCLocZ;
+  TClonesArray   *DTextrapolatedOnRPCGlobX;
+  TClonesArray   *DTextrapolatedOnRPCGlobY;
+  TClonesArray   *DTextrapolatedOnRPCGlobZ;
+  TClonesArray   *DTextrapolatedOnRPCGlobEta;
+  TClonesArray   *DTextrapolatedOnRPCGlobPhi;
+  TClonesArray   *DTextrapolatedOnRPCRegion;
+  TClonesArray   *DTextrapolatedOnRPCSector;
+  TClonesArray   *DTextrapolatedOnRPCStation;
+  TClonesArray   *DTextrapolatedOnRPCLayer;
+  TClonesArray   *DTextrapolatedOnRPCRoll;
+  TClonesArray   *DTextrapolatedOnRPCRing;
+  TClonesArray   *DTextrapolatedOnRPCStripw;
 
   Short_t         Ndtsegments;
   Short_t         NdtltTwinMuxOut;
@@ -227,7 +230,6 @@ class combined_trigger_studies {
   Short_t         NhltPaths;
   Short_t         NhltFilters;
   Short_t         NirpcrechitsTwinMux;
-  Short_t         NDTsegmentonRPC;
   
   // List of branches
   TBranch        *b_runnumber;   //!
@@ -403,6 +405,8 @@ class combined_trigger_studies {
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
    virtual void     Loop(); 
+
+   template<typename T> T getXY(TClonesArray * arr, int x, int y) { return static_cast<T>((*((TVectorT<float> *)(arr->At(x))))[y]); };
     
    float PhiConversion(int, int);
    std::vector<std::pair<int,int>> TnPSelection(Float_t, Float_t);
