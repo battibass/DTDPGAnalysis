@@ -43,7 +43,7 @@ void combined_trigger_studies::Loop()
 
   outputFile->cd("/kinematics");
 
-  TH1F *h_Zmumu_mass = new TH1F("h_Zmumu_mass", "Z boson candidate mass; m(#mu_tag,#mu_probe);# entries", 100, 50., 150.);
+  TH1F *h_Zmumu_mass = new TH1F("h_Zmumu_mass", "Z boson candidate mass; m(tag_{#mu},probe_{#mu}) (GeV);# entries", 100, 50., 150.);
   TH1F *h_mu_eta = new TH1F("h_mu_eta", "muon #eta;muon #eta;# entries", 48, -2.4, 2.4);
   TH1F *h_mu_phi = new TH1F("h_mu_phi", "muon #phi;muon #phi (rad);# entries", 48, -pig,  pig);
   TH1F *h_mu_pt  = new TH1F("h_mu_pt" , "muon p_{T};muon p_{T} (GeV/c);# entries", 150, 0., 150.);
@@ -54,19 +54,19 @@ void combined_trigger_studies::Loop()
 
   TH1F *h_dR_seg_muon_MB1 = new TH1F("h_dR_seg_muon_MB1", 
 				     "Distance in MB1 between segment and muon;#DeltaR (cm);# entires", 
-				     200, 0., 100.);
+				     100, 0., 50.);
 
   TH1F *h_dR_seg_muon_MB2 = new TH1F("h_dR_seg_muon_MB2", 
 				     "Distance in MB1 between segment and muon;#DeltaR (cm);# entires", 
-				     200, 0., 100.);
+				     100, 0., 50.);
 
   TH2F *h_dX_dY_seg_muon_MB1 = new TH2F("h_dX_dY_seg_muon_MB1", 
 					"Distance in MB1 between segment and muon;#Deltax (cm);#Deltay (cm)", 
-					200, -200., 200., 200, -200., 200.);
+					100, -50., 50., 100, -50., 50.);
 
   TH2F *h_dX_dY_seg_muon_MB2 = new TH2F("h_dX_dY_seg_muon_MB2", 
 					"Distance DT MB2 between segment and muon;#Deltax (cm);#Deltay (cm)", 
-					200, -200., 200., 200, -200., 200.);
+					100, -50., 50., 100, -50., 50.);
 
   TH1F *h_dPhi_seg_TrigIn_MB1 = new TH1F("h_dPhi_seg_TrigIn_MB1", 
 					 "Distance in MB1 between segment and TwinMux In;#Delta#phi (rad);# entires", 
@@ -126,6 +126,22 @@ void combined_trigger_studies::Loop()
 						   "Efficiency vs #phi;#phi (rad);#epsilon", 48,-pig,pig);
   TEfficiency* h_eff_rpc_phi_MB2 = new TEfficiency("h_eff_rpc_phi_MB2",
 						   "Efficiency vs #phi;#phi (rad);#epsilon", 48,-pig,pig);
+
+  TEfficiency* h_eff_combined_toy_pt_MB1 = new TEfficiency("h_eff_combined_toy_pt_MB1", 
+						  "Efficiency vs p_{T};p_{T} (GeV/c);#epsilon", 50,0.,100.);
+  TEfficiency* h_eff_combined_toy_pt_MB2 = new TEfficiency("h_eff_combined_toy_pt_MB2", 
+						  "Efficiency vs p_{T};p_{T} (GeV/c);#epsilon", 50,0.,100.);    
+  
+  TEfficiency* h_eff_combined_toy_eta_MB1 = new TEfficiency("h_eff_combined_toy_eta_MB1",
+						   "Efficiency vs #eta;#eta;#epsilon", 24,-1.2,1.2);
+  TEfficiency* h_eff_combined_toy_eta_MB2 = new TEfficiency("h_eff_combined_toy_eta_MB2",
+						   "Efficiency vs #eta;#eta;#epsilon", 24,-1.2,1.2);
+
+  TEfficiency* h_eff_combined_toy_phi_MB1 = new TEfficiency("h_eff_combined_toy_phi_MB1",
+						   "Efficiency vs #phi;#phi (rad);#epsilon", 48,-pig,pig);
+  TEfficiency* h_eff_combined_toy_phi_MB2 = new TEfficiency("h_eff_combined_toy_phi_MB2",
+						   "Efficiency vs #phi;#phi (rad);#epsilon", 48,-pig,pig);
+
   // Twin MuX quality and BX
 
   outputFile->cd("/trigger");
@@ -160,7 +176,7 @@ void combined_trigger_studies::Loop()
     nb = fChain->GetEntry(jentry);   nbytes += nb;
     
     if(jentry % 10000 == 0) 
-      std::cout << "[combined_trigger_studies::Loop] processed : " << jentry << " entries\r";
+      std::cout << "[combined_trigger_studies::Loop] processed : " << jentry << " entries\r" << std::flush;
     
     auto tnpPairs = combined_trigger_studies::TnPSelection(min_TnP_mass,max_TnP_mass);
 
@@ -237,9 +253,8 @@ void combined_trigger_studies::Loop()
 	  
 	  h_dX_dY_seg_muon_MB1->Fill(dXMB1,dYMB1);
 	  
-	  if(dRMB1 < minDrMB1 && dRMB1 < 10.) { // CB actually tune it!
+	  if(dRMB1 < minDrMB1) {
 	    dtsegment_index[0] = iDtSegm;
-	    has_match_DT_MB1_muon = true;
 	    minDrMB1 = dRMB1; 
 	  }
 	  
@@ -259,9 +274,8 @@ void combined_trigger_studies::Loop()
 	  
 	  h_dX_dY_seg_muon_MB2->Fill(dXMB2,dYMB2);
 	  
-	  if(dRMB2 < minDrMB2 && dRMB2 < 10.) { // CB actually tune it!  
+	  if(dRMB2 < minDrMB2) {  
 	    dtsegment_index[1] = iDtSegm;
-	    has_match_DT_MB2_muon = true;
 	    minDrMB2 = dRMB2; 
 	  }
 	  
@@ -269,9 +283,18 @@ void combined_trigger_studies::Loop()
 	
       }
 
+      if(minDrMB1 < 900.) 
 	h_dR_seg_muon_MB1->Fill(minDrMB1);
+
+      if(minDrMB2 < 900.)
 	h_dR_seg_muon_MB2->Fill(minDrMB2);
- 
+
+      if(minDrMB1 < 10.) // CB actually tune it!
+	has_match_DT_MB1_muon = true;
+
+      if(minDrMB2 < 10.) // CB actually tune it!
+	has_match_DT_MB2_muon = true;
+
       // ************************************
       // We want to look for _all_ DT trigger
       // primitives (TwinMux input) close
@@ -586,6 +609,21 @@ void combined_trigger_studies::Loop()
 	  h_eff_rpc_eta_MB2->Fill(has_rpc_match_MB2,probe_vec.Eta());
 	  h_eff_rpc_phi_MB2->Fill(has_rpc_match_MB2,probe_vec.Phi());
 	}
+
+      if (has_match_DT_MB1_muon)
+	{
+	  h_eff_combined_toy_pt_MB1->Fill(has_twinmux_in_BX0_MB1 || has_rpc_match_MB1,probe_vec.Pt());
+	  h_eff_combined_toy_eta_MB1->Fill(has_twinmux_in_BX0_MB1 || has_rpc_match_MB1,probe_vec.Eta());
+	  h_eff_combined_toy_phi_MB1->Fill(has_twinmux_in_BX0_MB1 || has_rpc_match_MB1,probe_vec.Phi());
+	}
+
+      if (has_match_DT_MB2_muon)
+	{
+	  h_eff_combined_toy_pt_MB2->Fill(has_twinmux_in_BX0_MB2 || has_rpc_match_MB2,probe_vec.Pt());
+	  h_eff_combined_toy_eta_MB2->Fill(has_twinmux_in_BX0_MB2 || has_rpc_match_MB2,probe_vec.Eta());
+	  h_eff_combined_toy_phi_MB2->Fill(has_twinmux_in_BX0_MB2 || has_rpc_match_MB2,probe_vec.Phi());
+	}
+
       
       // ************************************
       // 2nd excercise step 3:

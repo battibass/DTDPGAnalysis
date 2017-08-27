@@ -33,10 +33,10 @@ class combined_trigger_studies {
   //********************
 
   // Files and number of events
-  TString input_file_name  = "../DTNtuple.root";
+  TString input_file_name  = " /afs/cern.ch/user/b/battilan/work/public/DTNtuple_v2.root";
   TString output_file_name = "analysis_results.root";
 
-  Long64_t n_events = 500000;
+  Long64_t n_events = 9999999999;
 
   // RPC matching cuts
   Float_t cluster_size_cut = 3.;

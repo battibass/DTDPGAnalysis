@@ -32,7 +32,7 @@ process.load("RecoMuon.TrackingTools.MuonServiceProxy_cff")
 
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")  #DB v2, at least since GR_E_V42
 
-process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v9'#90X_dataRun2_Express_v1'
+process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v9'
 
 # for the emulator
 process.load("L1TriggerConfig.DTTPGConfigProducers.L1DTTPGConfigFromDB_cff")
@@ -67,6 +67,11 @@ process.source = cms.Source("PoolSource",
 )
 
 #this is to select collisions
+process.load("DPGAnalysis.Skims.ZMuSkim_cff")
+process.looseMuonsForZMuSkim.cut = cms.string('pt > 20 && abs(eta)<2.4 && isGlobalMuon = 1 && isTrackerMuon = 1 && abs(innerTrack().dxy) < 2.0')
+process.dimuonsZMuSkim.cut = cms.string('mass > 60')
+process.dimuonsZMuSkim.decay = cms.string("tightMuonsForZMuSkim@+ looseMuonsForZMuSkim@-")
+
 process.primaryVertexFilter = cms.EDFilter("VertexSelector",
    src = cms.InputTag("offlinePrimaryVertices"),
    cut = cms.string("!isFake && ndof > 4"), # && abs(z) <= 15 && position.Rho <= 2" # tracksSize() > 3 for the older cut
@@ -116,17 +121,13 @@ process.load("RecoLocalMuon.RPCRecHit.rpcRecHits_cfi")
 process.rpcRecHits.rpcDigiLabel = cms.InputTag('rpcUnpackingModule')
 
 
-# process.p = cms.Path(process.DTMuonSelection * process.dtunpacker * process.twinMuxStage2Digis  * process.scalersRawToDigi * process.lumiProducer * process.dtTriggerPrimitiveDigis + process.BMTFStage2Digis + process.rpcUnpackingModule + process.rpcRecHits + process.myDTNtuple)
-process.p = cms.Path(process.DTMuonSelection * process.dtunpacker * process.twinMuxStage2Digis  * process.scalersRawToDigi * process.lumiProducer * process.dtTriggerPrimitiveDigis + process.bmtfDigis + process.rpcUnpackingModule + process.rpcRecHits + process.myDTNtuple)
-# Output
-process.out = cms.OutputModule("PoolOutputModule"
-                               , outputCommands = cms.untracked.vstring(
-                               											"keep *",
-                                                                         "keep *_*_*_testRPCTwinMuxRawToDigi"
-                                                                       , "keep *_*_*_DTNTandRPC"
-																		)
-#                                , fileName = cms.untracked.string("file:cia.root")
-                               , SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring("p"))
-)
-
-
+process.p = cms.Path(process.diMuonSelSeq * 
+                     process.dtunpacker * 
+                     process.twinMuxStage2Digis  * 
+                     process.scalersRawToDigi * 
+                     process.lumiProducer * 
+                     process.dtTriggerPrimitiveDigis + 
+                     process.bmtfDigis + 
+                     process.rpcUnpackingModule + 
+                     process.rpcRecHits + 
+                     process.myDTNtuple)

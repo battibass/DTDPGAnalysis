@@ -45,13 +45,13 @@ TCanvas* compareEfficiencies(TString title, TEfficiency* eff1, TEfficiency* eff2
   eff1->SetLineColor(kRed);
   eff2->SetLineColor(kBlue);
   eff1->Draw(); 
-  gPad->Update(); 
+  canvas->Update(); 
   auto graph = eff1->GetPaintedGraph(); 
-  graph->SetMinimum(0.5);
-  graph->SetMaximum(1.03); 
+  graph->SetMinimum(0.);
+  graph->SetMaximum(1.05); 
   canvas->Update();
   eff2->Draw("same");   
-  TLegend *legend = new TLegend(0.75,0.8,0.9,0.9);
+  TLegend *legend = new TLegend(0.75,0.5,0.9,0.6);
   legend->SetBorderSize(1);
   legend->AddEntry(eff1, leg1, "lep");
   legend->AddEntry(eff2, leg2, "lep");    
@@ -132,6 +132,15 @@ void plotter()
   
   TEfficiency *h_eff_rpc_phi_MB1 = (TEfficiency*)gDirectory->Get("/efficiencies/h_eff_rpc_phi_MB1");
   TEfficiency *h_eff_rpc_phi_MB2 = (TEfficiency*)gDirectory->Get("/efficiencies/h_eff_rpc_phi_MB2");
+
+  TEfficiency *h_eff_combined_toy_pt_MB1 = (TEfficiency*)gDirectory->Get("/efficiencies/h_eff_combined_toy_pt_MB1");
+  TEfficiency *h_eff_combined_toy_pt_MB2 = (TEfficiency*)gDirectory->Get("/efficiencies/h_eff_combined_toy_pt_MB2");
+  
+  TEfficiency *h_eff_combined_toy_eta_MB1 = (TEfficiency*)gDirectory->Get("/efficiencies/h_eff_combined_toy_eta_MB1");
+  TEfficiency *h_eff_combined_toy_eta_MB2 = (TEfficiency*)gDirectory->Get("/efficiencies/h_eff_combined_toy_eta_MB2");
+  
+  TEfficiency *h_eff_combined_toy_phi_MB1 = (TEfficiency*)gDirectory->Get("/efficiencies/h_eff_combined_toy_phi_MB1");
+  TEfficiency *h_eff_combined_toy_phi_MB2 = (TEfficiency*)gDirectory->Get("/efficiencies/h_eff_combined_toy_phi_MB2");
   
   // From trigger folder (TwinMux quality and BX)
   
@@ -164,15 +173,23 @@ void plotter()
   h_mu_pt->Draw();
   
   c_kinematcis->cd(4);
+  h_mu_phi->SetMinimum(0.);	
   h_mu_phi->Draw();	
 
   TCanvas *dX_dY_seg_muon_MB1 = new TCanvas("#DeltaX vs #DeltaY: MB1", "#DeltaX vs #DeltaY: MB1", 500 ,500);
+  dX_dY_seg_muon_MB1->SetLogz();
   h_dX_dY_seg_muon_MB1->Draw("colz");
   TCanvas *dX_dY_seg_muon_MB2 = new TCanvas("#DeltaX vs #DeltaY: MB2", "#DeltaX vs #DeltaY: MB2", 500,500);
+  dX_dY_seg_muon_MB2->SetLogz();
   h_dX_dY_seg_muon_MB2->Draw("colz");
 
-  compareHistos("Distance muon - DT segment", h_dR_seg_muon_MB1, h_dR_seg_muon_MB2, "MB1", "MB2");    
-  compareHistos("#Delta#phi DT segment - TwinMux In", h_dPhi_seg_TrigIn_MB1, h_dPhi_seg_TrigIn_MB2, "MB1", "MB2");
+  TCanvas * dR_seg_muon  = compareHistos("Distance muon - DT segment", h_dR_seg_muon_MB1, h_dR_seg_muon_MB2, "MB1", "MB2");
+  dR_seg_muon->SetLogy();
+  dR_seg_muon->Update();
+
+  TCanvas * dPhi_seg_TrigIn = compareHistos("#Delta#phi DT segment - TwinMux In", h_dPhi_seg_TrigIn_MB1, h_dPhi_seg_TrigIn_MB2, "MB1", "MB2");
+  dPhi_seg_TrigIn->SetLogy();
+  dPhi_seg_TrigIn->Update();
 
   TCanvas *dX_MB1_layer_1 = new TCanvas("#DeltaX extrapolation - recHit: MB1, layer 1", "#DeltaX extrapolation - recHit: MB1, layer 1", 210,45,750,500);
   h_dX_MB1_layer_1->Draw();
@@ -196,11 +213,18 @@ void plotter()
   compareEfficiencies("TwinMux In eff vs p_{T}", h_eff_twinmux_in_pt_MB1, h_eff_twinmux_in_pt_MB2, "MB1", "MB2");    
   compareEfficiencies("TwinMux In eff vs #eta", h_eff_twinmux_in_eta_MB1, h_eff_twinmux_in_eta_MB2, "MB1", "MB2");    
   compareEfficiencies("TwinMux In eff vs #phi", h_eff_twinmux_in_phi_MB1, h_eff_twinmux_in_phi_MB2, "MB1", "MB2");    
+
+  compareEfficiencies("Eff vs p_{T} MB1", (TEfficiency*) h_eff_twinmux_in_pt_MB1->Clone(), h_eff_combined_toy_pt_MB1, "TwinMux", "TwinMux + RPC");    
+  compareEfficiencies("Eff vs #eta MB1", (TEfficiency*) h_eff_twinmux_in_eta_MB1->Clone(), h_eff_combined_toy_eta_MB1, "TwinMux", "TwinMux + RPC");    
+  compareEfficiencies("Eff vs #phi MB1", (TEfficiency*) h_eff_twinmux_in_phi_MB1->Clone(), h_eff_combined_toy_phi_MB1, "TwinMux", "TwinMux + RPC");    
+
+  compareEfficiencies("Eff vs p_{T} MB2", (TEfficiency*) h_eff_twinmux_in_pt_MB2->Clone(), h_eff_combined_toy_pt_MB2, "TwinMux", "TwinMux + RPC");    
+  compareEfficiencies("Eff vs #eta MB2", (TEfficiency*) h_eff_twinmux_in_eta_MB2->Clone(), h_eff_combined_toy_eta_MB2, "TwinMux", "TwinMux + RPC");    
+  compareEfficiencies("Eff vs #phi MB2", (TEfficiency*) h_eff_twinmux_in_phi_MB2->Clone(), h_eff_combined_toy_phi_MB2, "TwinMux", "TwinMux + RPC");    
   
   compareHistos("TwinMux IN/OUT BX MB1", h_BX_twinmux_in_MB1, h_BX_twinmux_out_MB1, "TwinMux In", "TwinMux Out");
   compareHistos("TwinMux IN/OUT BX MB2", h_BX_twinmux_in_MB2, h_BX_twinmux_out_MB2, "TwinMux In", "TwinMux Out");
   
   compareHistos("TwinMux IN Quality", h_qual_twinmux_in_MB1, h_qual_twinmux_in_MB2, "MB1", "MB2");
-  
 
 }
